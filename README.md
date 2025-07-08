@@ -29,7 +29,7 @@ This repo is made in preparation of the summer school 'Model-based multivariate 
 
 ### Repo structure
 
-```bash
+```
 ├── source
 │   ├── quarto                      ├ quarto reports
 │   └── scripts                     ├ R scripts
