@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it using these metadata.
+title: "Joint Species Distribution Modelling of a Pollinator Community in Flanders"
+authors:
+- given-names: Ward
+  family-names: Langeraert
+  affiliation: Research Institute for Nature and Forest (INBO)
+  orcid: 0000-0002-5900-8109
+keywords:
+- JSDM
+- species distribution modelling
+- pollinators
+- Flanders
+contact:
+- given-names: Ward
+  family-names: Langeraert
+  affiliation: Research Institute for Nature and Forest (INBO)
+  orcid: 0000-0002-5900-8109
+doi: ~
+license: CC-BY-4.0
+repository-code: https://github.com/wlangera/jsdm-pollinators-flanders/
+type: software
+abstract: "Explore Joint Species Distribution Modelling of a pollinator community
+  in Flanders."

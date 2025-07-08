@@ -1,6 +1,7 @@
 <!-- badges: start -->
 ![GitHub](https://img.shields.io/github/license/wlangera/jsdm-pollinators-flanders)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/wlangera/jsdm-pollinators-flanders/check-project)
+[![Release](https://img.shields.io/github/release/inbo/macro-moths-msci.svg)](https://github.com/wlangera/jsdm-pollinators-flanders/releases)
 ![GitHub repo size](https://img.shields.io/github/repo-size/wlangera/jsdm-pollinators-flanders)
 <!-- badges: end -->
 
@@ -19,10 +20,40 @@ Research Institute for Nature and Forest (INBO)[^cph][^fnd]
 
 <!-- community: inbo -->
 
+### Description
 <!-- description: start -->
-Replace this with a short description of the project.
-It becomes the abstract of the project in the citation information.
-And the project description at https://zenodo.org
+Explore Joint Species Distribution Modelling of a pollinator community in Flanders.
 <!-- description: end -->
 
-Anything below here is visible in the README but not in the citation.
+This repo is made in preparation of the summer school 'Model-based multivariate analysis for ecologists' from 21st-25th of July 2025 in Hjerkinn, Norway ([link](https://bertv.folk.ntnu.no/)).
+
+### Repo structure
+
+```bash
+├── source
+│   ├── quarto                      ├ quarto reports
+│   └── scripts                     ├ R scripts
+│
+├── data
+│   ├── raw                         ├ store raw data here
+│   ├── intermediate                ├ intermediate datasets
+│   └── processed                   ├ finalised datasets
+│
+├── output                          ├ folder to store outputs
+├── media                           ├ folder to store media
+│
+├── checklist.yml                   ├ options checklist package (https://github.com/inbo/checklist)
+├── inst
+│   └── en_gb.dic                   ├ dictionary with words that should not be checked by checklist
+├── .github                         │ 
+│   ├── workflows                   │ 
+│   │   └── checklist_project.yml   ├ GitHub repo settings
+│   ├── CODE_OF_CONDUCT.md          │ 
+│   └── CONTRIBUTING.md             │
+├── jsdm-pollinators-flanders.Rproj ├ R project
+├── README.md                       ├ project description
+├── LICENSE.md                      ├ license
+├── CITATION.cff                    ├ citation info
+├── .zenodo.json                    ├ zenodo metadata
+└── .gitignore                      ├ files to ignore
+```

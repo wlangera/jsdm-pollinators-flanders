@@ -1,0 +1,38 @@
+{
+  "access_right": "open",
+  "title": "Joint Species Distribution Modelling of a Pollinator Community in Flanders",
+  "description": "<p>Explore Joint Species Distribution Modelling of a pollinator community in Flanders.<\/p>",
+  "keywords": [
+    "JSDM",
+    "species distribution modelling",
+    "pollinators",
+    "Flanders"
+  ],
+  "upload_type": "software",
+  "license": "CC-BY-4.0",
+  "language": "eng",
+  "contributors": [
+    {
+      "name": "Langeraert, Ward",
+      "affiliation": "Research Institute for Nature and Forest (INBO)",
+      "orcid": "0000-0002-5900-8109",
+      "type": "contactperson"
+    },
+    {
+      "name": "Research Institute for Nature and Forest (INBO)",
+      "type": "rightsholder"
+    }
+  ],
+  "creators": [
+    {
+      "name": "Langeraert, Ward",
+      "affiliation": "Research Institute for Nature and Forest (INBO)",
+      "orcid": "0000-0002-5900-8109"
+    }
+  ],
+  "communities": [
+    {
+      "identifier": "inbo"
+    }
+  ]
+}
