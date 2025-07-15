@@ -52,7 +52,12 @@ bases <- tolower(sapply(observation_files, get_base, USE.NAMES = FALSE))
 bases_unique <- make.unique(bases, sep = "_df")  # appends _df1, _df2, etc.
 
 # Read the files and build a named list
-insect_dfs <- lapply(observation_files, read_csv, show_col_types = FALSE)
+insect_dfs <- lapply(
+  observation_files,
+  read_csv,
+  locale = locale(decimal_mark = ","),
+  show_col_types = FALSE
+)
 names(insect_dfs) <- bases_unique
 
 # Join datasets of the same groups
