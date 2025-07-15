@@ -138,7 +138,7 @@ length(unique(unlist(sapply(merged_dfs, function(df) unique(df$id))))) -
 ```
 
 No. There are more observations then unique id's.
-Let's check 10 random examples from each group:
+Let's check 3 random examples from each group:
 
 ```{r}
 #| results: "asis"
@@ -150,7 +150,7 @@ for (i in names(merged_dfs)) {
     filter(n() > 1) %>%
     ungroup()
 
-  ids <- sample(unique(double_ids$id), 10)
+  ids <- sample(unique(double_ids$id), 3)
 
   subset_df <- double_ids %>%
     filter(id %in% ids) %>%
@@ -163,4 +163,4 @@ for (i in names(merged_dfs)) {
 }
 ```
 
-We notice that this is because you can have multiple individuals in a single observation ID (see e.g. [here](https://waarnemingen.be/observation/246980222/) or [here](https://waarnemingen.be/observation/178279003/) or [here](https://waarnemingen.be/observation/194235586/)).
+We notice that this is because you can have multiple individuals in a single observation ID (see e.g. [here](https://waarnemingen.be/observation/246980222/), [here](https://waarnemingen.be/observation/178279003/) or [here](https://waarnemingen.be/observation/194235586/)).
