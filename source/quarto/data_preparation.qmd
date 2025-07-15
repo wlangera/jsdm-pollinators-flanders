@@ -8,6 +8,8 @@ format:
     toc: true
     toc-depth: 2
     toc-location: left
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Goal
@@ -15,4 +17,150 @@ format:
 Load and prepare the observation data in `data/raw` folder.
 This includes merging of datasets and use simple filters.
 
+```{r}
+#| warning: false
+#| message: false
+# Packages
+library(tidyverse)
+library(knitr)
+
+# Conflicts
+conflicted::conflicts_prefer(dplyr::filter)
+
+# Paths
+source_path <- here::here("source", "scripts")
+data_path <- here::here("data", "raw")
+out_path <- here::here("data", "intermediate")
+
+# Source
+source(file.path(source_path, "get_base.R"))
+```
+
 # Load data
+
+```{r}
+# Get files with observation data
+observation_files <- list.files(data_path, "^INBODATAVR", full.names = TRUE)
+observation_files <- observation_files[
+  !grepl("MetToestemming", observation_files, ignore.case = TRUE)
+]
+
+# Get base names for dataframe objects
+bases <- tolower(sapply(observation_files, get_base, USE.NAMES = FALSE))
+
+# Make bases unique when needed (e.g. nachtvlinders_df1, _df2 …)
+bases_unique <- make.unique(bases, sep = "_df")  # appends _df1, _df2, etc.
+
+# Read the files and build a named list
+insect_dfs <- lapply(observation_files, read_csv, show_col_types = FALSE)
+names(insect_dfs) <- bases_unique
+
+# Join datasets of the same groups
+idx_groups <- split(seq_along(bases), bases)   # e.g. $nachtvlinders = 3 4 5 6
+
+merged_dfs <- lapply(idx_groups, function(idx) {
+  bind_rows(insect_dfs[idx])   # align columns, fill in NA where absent
+})
+```
+
+Which groups do we have?
+
+```{r}
+names(merged_dfs)
+```
+
+How many records per group?
+
+```{r}
+sapply(merged_dfs, nrow)
+```
+
+# Filter data
+## Date
+
+We select the data from 2015-2024 (10 year span).
+
+```{r}
+# Select data in time frame
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    filter(year(datum) > 2014,
+           year(datum) <= 2024)
+})
+```
+
+## Validated data
+
+We select data that has been validated.
+
+```{r}
+# Select validated data
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    filter(grepl("^Goedgekeurd", status))
+})
+```
+
+## Precision of coordinates
+
+How is the precision distributed? We only look at precision of less then 500 m.
+
+```{r}
+#| warning: false
+#| message: false
+for (i in names(merged_dfs)) {
+  p <- merged_dfs[[i]] %>%
+    filter(precisie < 500) %>%
+    ggplot(aes(x = precisie)) +
+    geom_histogram() +
+    ggtitle(i)
+  print(p)
+}
+```
+
+We select data that has been validated.
+
+```{r}
+# Select data with small precision
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    filter(precisie < 100)
+})
+```
+
+## Duplicates
+
+Is every record unique?
+
+```{r}
+length(unique(unlist(sapply(merged_dfs, function(df) unique(df$id))))) -
+  sum(sapply(merged_dfs, nrow))
+```
+
+No. There are more observations then unique id's.
+Let's check 10 random examples from each group:
+
+```{r}
+#| results: "asis"
+set.seed(123)
+
+for (i in names(merged_dfs)) {
+  double_ids <- merged_dfs[[i]] %>%
+    group_by(id) %>%
+    filter(n() > 1) %>%
+    ungroup()
+
+  ids <- sample(unique(double_ids$id), 10)
+
+  subset_df <- double_ids %>%
+    filter(id %in% ids) %>%
+    select(id, naam_nl, datum, aantal, gedrag, methode, geslacht, lon, lat)
+
+  print(i)
+  cat("\n")
+  print(kable(subset_df, digits = 5))
+  cat("\n")
+}
+```
+
+We notice that this is because you can have multiple individuals in a single observation ID (see e.g. [here](https://waarnemingen.be/observation/246980222/) or [here](https://waarnemingen.be/observation/178279003/) or [here](https://waarnemingen.be/observation/194235586/)).
