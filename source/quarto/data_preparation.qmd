@@ -1,0 +1,18 @@
+---
+title: "Preparation of observation data"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+---
+
+# Goal
+
+Load and prepare the observation data in `data/raw` folder.
+This includes merging of datasets and use simple filters.
+
+# Load data
