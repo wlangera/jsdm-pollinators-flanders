@@ -6,7 +6,7 @@ date-format: "D MMMM YYYY"
 format:
   html:
     toc: true
-    toc-depth: 2
+    toc-depth: 3
     toc-location: left
 editor_options: 
   chunk_output_type: console
@@ -23,6 +23,7 @@ This includes merging of datasets and use simple filters.
 # Packages
 library(tidyverse)
 library(knitr)
+library(rgbif)
 
 # Conflicts
 conflicted::conflicts_prefer(dplyr::filter)
@@ -273,14 +274,20 @@ exclusion_rules <- list(
   bijzonderheden = "NULL"
 )
 
+# Calculate number of details per observation
 merged_dfs <- lapply(merged_dfs, function(df) {
   df %>%
     mutate(n_detail = rowSums(across(
       all_of(names(exclusion_rules)),
       ~ is_informative(., exclusion_rules[[cur_column()]])
-    )))
+    ))) %>%
+    mutate(
+      methode = ifelse(methode == "NULL", "onbekend", methode),
+      bijzonderheden = ifelse(bijzonderheden == "NULL", NA, bijzonderheden)
+    )
 })
 
+# Visualise per pollinator group
 for (i in names(merged_dfs)) {
   p <- merged_dfs[[i]] %>%
     count(n_detail) %>%
@@ -310,3 +317,119 @@ merged_dfs <- lapply(merged_dfs, function(df) {
 ### Valstat
 
 We only have this information for the dragonfly dataset.
+
+## Taxon level
+
+We only keep species identified on (sub)species level.
+
+```{r}
+filtered_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    filter(id_species_type %in% c("I", "S"))
+})
+```
+
+# Clean up data
+## Taxon matching
+
+We get taxonomical information based on the GBIF taxonomic backbone.
+
+```{r}
+#| warning: false
+#| message: false
+taxon_matches <- lapply(merged_dfs, function(df) {
+  taxon_matches <- name_backbone_checklist(unique(df$naam_lat))
+})
+
+for (i in names(taxon_matches)) {
+  p <- taxon_matches[[i]] %>%
+    ggplot(aes(x = confidence)) +
+    geom_histogram() +
+    ggtitle(i) +
+    theme_minimal()
+  print(p)
+}
+```
+
+We select the columns of interest and move subspecies to species level.
+We also add a column with the name of the pollinator group.
+
+```{r}
+# Join taxonomic information
+filtered_dfs <- lapply(names(merged_dfs), function(name) {
+  obs_df <- filtered_dfs[[name]]
+  taxa_df <- taxon_matches[[name]] %>%
+    select(phylum, class, order, family, genus, species, gbifID = speciesKey,
+           naam_lat = verbatim_name)
+
+  obs_df %>%
+    left_join(taxa_df, by = join_by(naam_lat)) %>%
+    mutate(pollinator_group = name)
+})
+names(filtered_dfs) <- names(merged_dfs)
+```
+
+## Darwin Core mapping
+
+We give standardised column names according to [Darwin Core](https://dwc.tdwg.org/).
+We only keep columns of interest and put them in a logical order.
+
+```{r}
+# Keep columns of interest
+filtered_dfs <- lapply(filtered_dfs, function(df) {
+  df %>%
+    mutate(
+      geodeticDatum = 4326,
+      verbatimSRS = 31370
+    ) %>%
+    select(
+      occurrenceID = id,
+      verbatimID = id_obs,
+      # Species
+      pollinatorGroup = pollinator_group,
+      vernacularName = naam_nl,
+      species,
+      gbifID,
+      # Occurrence
+      eventDate = datum,
+      individualCount = aantal,
+      behavior = gedrag,
+      samplingProtocol = methode,
+      lifeStage = kleed,
+      sex = geslacht,
+      # Location
+      decimalLongitude = lon,
+      decimalLatitude = lat,
+      geodeticDatum,
+      coordinateUncertaintyInMeters = precisie,
+      verbatimLongitude = x,
+      verbatimLatitude = y,
+      verbatimSRS,
+      utm1,
+      locality = gebied,
+      municipality = gemeente,
+      county = provincie,
+      # Taxonomy
+      phylum, class, order, family, genus,
+      # Extra
+      validationStatus = status,
+      occurrenceRemarks = bijzonderheden,
+      nDetails = n_detail,
+      verbatimName = naam_lat
+    )
+})
+```
+
+# Write out datasets
+
+```{r}
+for (i in names(filtered_dfs)) {
+  # Create file path
+  file_name <- paste0(i, "_interim_data.csv")
+  path_full <- file.path(out_path, file_name)
+
+  # Write out dataset as csv
+  write_csv(filtered_dfs[[i]], path_full)
+  print(paste("Dataset written to", path_full))
+}
+```
