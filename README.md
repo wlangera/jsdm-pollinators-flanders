@@ -27,6 +27,19 @@ Explore Joint Species Distribution Modelling of a pollinator community in Flande
 
 This repo is made in preparation of the summer school 'Model-based multivariate analysis for ecologists' from 21st-25th of July 2025 in Hjerkinn, Norway ([link](https://bertv.folk.ntnu.no/)).
 
+### Order of execution
+
+Follow the steps below to run the scripts in a logical order.
+
+#### Step 1: data_preparation.qmd
+
+Load and prepare the observation data from `data/raw` folder.
+This includes merging of datasets and use simple data filters.
+
+#### Step 2: prepare_trait_phylo.qmd
+
+Load and prepare the trait and phylogenetic data from `data/raw` folder.
+
 ### Repo structure
 
 ```
