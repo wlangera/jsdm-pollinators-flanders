@@ -1,0 +1,154 @@
+---
+title: "Preparation of trait and phylogenetic data"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+# Goal
+
+Load and prepare the trait and phylogenetic data in `data/raw` folder.
+
+```{r}
+#| warning: false
+#| message: false
+# Packages
+library(tidyverse)
+library(ape)
+
+# Conflicts
+conflicted::conflicts_prefer(dplyr::filter)
+
+# Paths
+data_path <- here::here("data", "raw")
+out_path <- here::here("data", "intermediate")
+```
+
+# Trait data
+## Load data
+
+We load the trait data.
+
+```{r}
+trait_data_raw <- read_csv2(file.path(data_path,
+                                      "traits_bestuivers_finaal.csv"),
+                            show_col_types = FALSE)
+```
+
+We load the species list.
+
+```{r}
+species_list <- read_csv(file.path(out_path, "species_list.csv"),
+                         show_col_types = FALSE)
+```
+
+## Join taxonomic data
+
+We add taxonomic information to the trait dataset so that it can be merged easily with the observation dataset based on GBIF ID or species name.
+We remove trait data for species not in the interim species list.
+
+```{r}
+trait_data_full <- trait_data_raw %>%
+  select(-species, -genus) %>%
+  inner_join(species_list, by = join_by(GBIF.ID == gbifID))
+```
+
+## Data preparation
+
+```{r}
+trait_data <- trait_data_full[, -1] %>%
+  mutate(
+    pollinatorGroup = ifelse(
+      Bestuiversgroep == "macro-nachtvlinders", "nachtvlinders", Bestuiversgroep
+    )
+  ) %>%
+  select(
+    # Taxonomic information
+    gbifID = GBIF.ID,
+    species, pollinatorGroup, genus, family, order, class, phylum, class,
+    redListCategory = Rodelijst,
+    verbatimRedListCategory = RodeLijstCategorie,
+    # Traits
+    larvalFoodSource = voedsel_larven,
+    larvalFeedingSpecialisation = specialisatie_larven,
+    reproductiveHabitat = voortplantingshabitat,
+    hostPlantType = waardplanten,
+    adultFeedingSpecialisation = specialisatie_adult,
+    isHabitatGeneralist = habitat_generalist,
+    forestAffinity = bos,
+    grasslandAffinity = grasland,
+    wetlandAffinity = moeras,
+    croplandAffinity = akker,
+    urbanAffinity = urbaan,
+    heathlandAffinity = heide,
+    freshwaterAffinity = `zoet water`,
+    brackishAffinity = brakke_zilte_milieus,
+    coastalAffinity = duinen_strand,
+    temperatureMin = Temp_min,
+    temperatureMax = Temp_max,
+    temperatureMean = Temp_mean,
+    temperatureQuantiles = quantiles,
+    temperaturePreference = Tvoorkeur,
+    bodyLength = lichaamslengte,
+    voltinismMean = Voltinism_mean,
+    voltinismMaxCategory = Voltinism_max,
+    fecundity = Fecundity,
+    lifespanDays = Lifespan,
+    developmentTimeDays = Development_time,
+    flightPeriod = FlightPeriod,
+    migrationBehaviour = Migration,
+    habitatHumidityPreference = HabitatHumidity,
+    # Extra
+    traitRemarks = Opmerkingen,
+    ecosystemRemarks = opmerkingen_ecosystemen
+  )
+```
+
+## Write out data
+
+```{r}
+write_csv(trait_data, file.path(out_path, "trait_data_interim.csv"))
+```
+
+# Phylogenetic data
+
+We provide an example script of how to create a taxonomical tree using the **ape** package.
+
+<!-- spell-check: ignore:start -->
+
+Ovaskainen, O., & Abrego, N. (2020). Joint species distribution modelling: With applications in R. Cambridge University Press. https://doi.org/10.1017/9781108591720 (p. 123)
+
+<!-- spell-check: ignore:end -->
+
+We make the example for a small group, the butterflies.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+# Get butterfly data
+butterfly_data <- trait_data %>%
+  filter(pollinatorGroup == "dagvlinders") %>%
+  distinct(species, genus, family, order)
+butterfly_data[c("species", "genus", "family", "order")] <- lapply(
+  butterfly_data[c("species", "genus", "family", "order")],
+  factor
+)
+
+# Create tree
+butterfly_tree <- as.phylo(
+  ~order / family / genus / species,
+  data = butterfly_data,
+  collapse = FALSE
+)
+butterfly_tree$edge.length <- rep(1, length(butterfly_tree$edge))
+
+# Plot tree
+plot(butterfly_tree, edge.width = 2, label.offset = 0.1)
+```

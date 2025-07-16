@@ -1,0 +1,446 @@
+---
+title: "Preparation of observation data"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+# Goal
+
+Load and prepare the observation data in `data/raw` folder.
+This includes merging of datasets and use simple filters.
+
+```{r}
+#| warning: false
+#| message: false
+# Packages
+library(tidyverse)
+library(knitr)
+library(rgbif)
+
+# Conflicts
+conflicted::conflicts_prefer(dplyr::filter)
+
+# Paths
+source_path <- here::here("source", "scripts")
+data_path <- here::here("data", "raw")
+out_path <- here::here("data", "intermediate")
+
+# Source
+source(file.path(source_path, "get_base.R"))
+source(file.path(source_path, "utils.R"))
+```
+
+# Load data
+
+```{r}
+# Get files with observation data
+observation_files <- list.files(data_path, "^INBODATAVR", full.names = TRUE)
+observation_files <- observation_files[
+  !grepl("MetToestemming", observation_files, ignore.case = TRUE)
+]
+
+# Get base names for dataframe objects
+bases <- tolower(sapply(observation_files, get_base, USE.NAMES = FALSE))
+
+# Make bases unique when needed (e.g. nachtvlinders_df1, _df2 …)
+bases_unique <- make.unique(bases, sep = "_df")  # appends _df1, _df2, etc.
+
+# Read the files and build a named list
+insect_dfs <- lapply(
+  observation_files,
+  read_csv,
+  locale = locale(decimal_mark = ","),
+  show_col_types = FALSE
+)
+names(insect_dfs) <- bases_unique
+
+# Join datasets of the same groups
+idx_groups <- split(seq_along(bases), bases)   # e.g. $nachtvlinders = 3 4 5 6
+
+merged_dfs <- lapply(idx_groups, function(idx) {
+  bind_rows(insect_dfs[idx])   # align columns, fill in NA where absent
+})
+```
+
+Which groups do we have?
+
+```{r}
+names(merged_dfs)
+```
+
+How many records per group?
+
+```{r}
+sapply(merged_dfs, nrow)
+```
+
+# Filter data
+## Date
+
+We select the data from 2015-2024 (10 year span).
+
+```{r}
+# Select data in time frame
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    filter(year(datum) > 2014,
+           year(datum) <= 2024)
+})
+```
+
+## Validated data
+
+We select data that has been validated.
+
+```{r}
+# Select validated data
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    filter(grepl("^Goedgekeurd", status))
+})
+```
+
+## Precision of coordinates
+
+How is the precision distributed? We only look at precision of less then 500 m.
+
+```{r}
+#| warning: false
+#| message: false
+for (i in names(merged_dfs)) {
+  p <- merged_dfs[[i]] %>%
+    filter(precisie < 500) %>%
+    ggplot(aes(x = precisie)) +
+    geom_histogram() +
+    ggtitle(i) +
+    theme_minimal()
+  print(p)
+}
+```
+
+We select data that has been validated.
+
+```{r}
+# Select data with small precision
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    filter(precisie < 100)
+})
+```
+
+## Duplicates
+
+Is every record unique?
+
+```{r}
+length(unique(unlist(sapply(merged_dfs, function(df) unique(df$id))))) -
+  sum(sapply(merged_dfs, nrow))
+```
+
+No. There are more observations then unique id's.
+Let's check 3 random examples from each group:
+
+```{r}
+#| results: "asis"
+set.seed(123)
+
+for (i in names(merged_dfs)) {
+  double_ids <- merged_dfs[[i]] %>%
+    group_by(id) %>%
+    filter(n() > 1) %>%
+    ungroup()
+
+  ids <- sample(unique(double_ids$id), 3)
+
+  subset_df <- double_ids %>%
+    filter(id %in% ids) %>%
+    select(id, naam_nl, datum, aantal, gedrag, methode, geslacht, lon, lat)
+
+  print(i)
+  cat("\n")
+  print(kable(subset_df, digits = 5))
+  cat("\n")
+}
+```
+
+We notice that this is because you can have multiple individuals in a single observation ID (see e.g. [here](https://waarnemingen.be/observation/246980222/), [here](https://waarnemingen.be/observation/178279003/) or [here](https://waarnemingen.be/observation/194235586/)).
+
+We only combine observations if they are identical and sum the numbers.
+We also remove potential absences
+
+```{r}
+# Sum numbers for identical observations
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    group_by(across(c(-aantal))) %>% # group by all except "aantal"
+    summarise(aantal = sum(aantal), .groups = "drop") %>%
+    filter(aantal > 0) # Remove potential absences
+})
+```
+
+We give unique id's to all observations.
+
+```{r}
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    rename("id_obs" = "id") %>%
+    mutate(suffix = row_number(), .by = "id_obs") %>%
+    mutate(id = paste(id_obs, suffix, sep = ".")) %>%
+    select("id", everything(), -"suffix")
+})
+```
+
+## Quality filters
+
+<!-- spell-check: ignore:start -->
+
+Van Eupen, C., Maes, D., Herremans, M., Swinnen, K. R., Somers, B., & Luca, S. (2021). The impact of data quality filtering of opportunistic citizen science data on species distribution model performance. *Ecological Modelling, 444*, 109453. <https://doi.org/10.1016/j.ecolmodel.2021.109453>
+
+Van Eupen, C., Maes, D., Herremans, M., Swinnen, K. R., Somers, B., & Luca, S. (2022). Species profiles support recommendations for quality filtering of opportunistic citizen science data. *Ecological Modelling, 467*, 109910. <https://doi.org/10.1016/j.ecolmodel.2022.109910>
+
+<!-- spell-check: ignore:end -->
+
+Filters:
+
+Here’s a concise bullet-point summary for your Quarto document:
+
+* **ACTIVITY**:
+  Filters based on the observer's annual average number of active recording days (2014–2019).
+  Only includes observers who contributed to 80% of the data, using a threshold of ≥92 active days/year (first quartile of this group) as a proxy for observer experience—linked to fewer false positives/negatives.
+
+* **DETAIL**:
+  Filters records that include additional information beyond the default fields (e.g., behaviour, photos, comments).
+  Used as a proxy for observer effort in unstructured data, where more detailed records are considered higher quality.
+
+* **VALSTAT**:
+  Filters based on the record’s validation status in the database.
+  Includes only records marked as **correct**, excluding those marked as **uncertain**, which may lack sufficient information or have not been validated.
+
+### Activity
+
+We do not have data on the observers.
+
+### Detail
+
+Columns of interest:
+
+- `gedrag`: not "onbekend"<!-- spell-check: ignore -->
+
+```{r}
+count_unique_cats(merged_dfs, "gedrag")
+```
+
+- `methode`: not "onbekend" or "NULL"<!-- spell-check: ignore -->
+
+```{r}
+count_unique_cats(merged_dfs, "methode")
+```
+
+- `kleed`: not "onbekend"<!-- spell-check: ignore -->
+
+```{r}
+count_unique_cats(merged_dfs, "kleed")
+```
+
+- `geslacht`: not "onbekend"<!-- spell-check: ignore -->
+
+```{r}
+count_unique_cats(merged_dfs, "geslacht")
+```
+
+- `bijzonderheden`: not `NA` or "NULL"<!-- spell-check: ignore -->
+
+```{r}
+count_unique_cats(merged_dfs, "kleed")
+```
+
+We count the number of additional columns filled in for each observations and look at the distribution.
+
+```{r}
+# Define exclusion rules per column
+exclusion_rules <- list(
+  gedrag = "onbekend",
+  methode = c("onbekend", "NULL"),
+  kleed = "onbekend",
+  geslacht = "onbekend",
+  bijzonderheden = "NULL"
+)
+
+# Calculate number of details per observation
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    mutate(n_detail = rowSums(across(
+      all_of(names(exclusion_rules)),
+      ~ is_informative(., exclusion_rules[[cur_column()]])
+    ))) %>%
+    mutate(
+      methode = ifelse(methode == "NULL", "onbekend", methode),
+      bijzonderheden = ifelse(bijzonderheden == "NULL", NA, bijzonderheden)
+    )
+})
+
+# Visualise per pollinator group
+for (i in names(merged_dfs)) {
+  p <- merged_dfs[[i]] %>%
+    count(n_detail) %>%
+    mutate(n_detail = factor(n_detail,
+                             levels = 0:sort(length(exclusion_rules)))) %>%
+    ggplot(aes(x = n_detail, y = n)) +
+    geom_bar(stat = "identity") +
+    geom_text(aes(label = n), vjust = -0.25) +
+    ggtitle(i) +
+    scale_x_discrete(drop = FALSE) +
+    theme_minimal()
+
+  print(p)
+}
+```
+
+We keep the data with a detail score larger than 1.
+
+```{r}
+# Keep detail level 2 and higher
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    filter(n_detail > 1)
+})
+```
+
+### Valstat
+
+We only have this information for the dragonfly dataset.
+
+## Taxon level
+
+We only keep species identified on (sub)species level.
+
+```{r}
+filtered_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    filter(id_species_type %in% c("I", "S"))
+})
+```
+
+# Clean up data
+## Taxon matching
+
+We get taxonomical information based on the GBIF taxonomic backbone.
+
+```{r}
+#| warning: false
+#| message: false
+taxon_matches <- lapply(filtered_dfs, function(df) {
+  name_backbone_checklist(unique(df$naam_lat))
+})
+
+for (i in names(taxon_matches)) {
+  p <- taxon_matches[[i]] %>%
+    ggplot(aes(x = confidence)) +
+    geom_histogram() +
+    ggtitle(i) +
+    theme_minimal()
+  print(p)
+}
+```
+
+We select the columns of interest and move subspecies to species level.
+We also add a column with the name of the pollinator group.
+
+```{r}
+# Join taxonomic information
+filtered_dfs <- lapply(names(merged_dfs), function(name) {
+  obs_df <- filtered_dfs[[name]]
+  taxa_df <- taxon_matches[[name]] %>%
+    select(phylum, class, order, family, genus, species, gbifID = speciesKey,
+           naam_lat = verbatim_name)
+
+  obs_df %>%
+    left_join(taxa_df, by = join_by(naam_lat)) %>%
+    mutate(pollinator_group = name)
+})
+names(filtered_dfs) <- names(merged_dfs)
+```
+
+## Darwin Core mapping
+
+We give standardised column names according to [Darwin Core](https://dwc.tdwg.org/).
+We only keep columns of interest and put them in a logical order.
+
+```{r}
+# Keep columns of interest
+filtered_dfs <- lapply(filtered_dfs, function(df) {
+  df %>%
+    mutate(
+      geodeticDatum = 4326,
+      verbatimSRS = 31370
+    ) %>%
+    select(
+      occurrenceID = id,
+      verbatimID = id_obs,
+      # Species
+      pollinatorGroup = pollinator_group,
+      vernacularName = naam_nl,
+      species,
+      gbifID,
+      # Occurrence
+      eventDate = datum,
+      individualCount = aantal,
+      behavior = gedrag,
+      samplingProtocol = methode,
+      lifeStage = kleed,
+      sex = geslacht,
+      # Location
+      decimalLongitude = lon,
+      decimalLatitude = lat,
+      geodeticDatum,
+      coordinateUncertaintyInMeters = precisie,
+      verbatimLongitude = x,
+      verbatimLatitude = y,
+      verbatimSRS,
+      utm1,
+      locality = gebied,
+      municipality = gemeente,
+      county = provincie,
+      # Taxonomy
+      phylum, class, order, family, genus,
+      # Extra
+      validationStatus = status,
+      occurrenceRemarks = bijzonderheden,
+      nDetails = n_detail,
+      verbatimName = naam_lat
+    )
+})
+```
+
+# Write out datasets
+
+We write out the observations datasets:
+
+```{r}
+for (i in names(filtered_dfs)) {
+  # Create file path
+  file_name <- paste0(i, "_interim_data.csv")
+  path_full <- file.path(out_path, file_name)
+
+  # Write out dataset as csv
+  write_csv(filtered_dfs[[i]], path_full)
+  print(paste("Dataset written to", path_full))
+}
+```
+
+We write out the species list:
+
+```{r}
+bind_rows(taxon_matches) %>%
+  select(phylum, class, order, family, genus, species, gbifID = speciesKey) %>%
+  distinct() %>%
+  write_csv(file.path(out_path, "species_list.csv"))
+```
