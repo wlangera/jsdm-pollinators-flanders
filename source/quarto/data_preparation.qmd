@@ -422,6 +422,8 @@ filtered_dfs <- lapply(filtered_dfs, function(df) {
 
 # Write out datasets
 
+We write out the observations datasets:
+
 ```{r}
 for (i in names(filtered_dfs)) {
   # Create file path
@@ -432,4 +434,13 @@ for (i in names(filtered_dfs)) {
   write_csv(filtered_dfs[[i]], path_full)
   print(paste("Dataset written to", path_full))
 }
+```
+
+We write out the species list:
+
+```{r}
+bind_rows(taxon_matches) %>%
+  select(phylum, class, order, family, genus, species, gbifID = speciesKey,
+         verbatimName = verbatim_name) %>%
+  write_csv(file.path(out_path, "species_list.csv"))
 ```
