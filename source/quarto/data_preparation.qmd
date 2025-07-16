@@ -169,3 +169,26 @@ for (i in names(merged_dfs)) {
 ```
 
 We notice that this is because you can have multiple individuals in a single observation ID (see e.g. [here](https://waarnemingen.be/observation/246980222/), [here](https://waarnemingen.be/observation/178279003/) or [here](https://waarnemingen.be/observation/194235586/)).
+
+We only combine observations if they are identical and sum the numbers.
+
+```{r}
+# Sum numbers for identical observations
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    group_by(across(c(-aantal))) %>% # group by all except "aantal"
+    summarise(aantal = sum(aantal), .groups = "drop")
+})
+```
+
+We give unique id's to all observations.
+
+```{r}
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    rename("id_obs" = "id") %>%
+    mutate(suffix = row_number(), .by = "id_obs") %>%
+    mutate(id = paste(id_obs, suffix, sep = ".")) %>%
+    select("id", everything(), -"suffix")
+})
+```
