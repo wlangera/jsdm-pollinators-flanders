@@ -34,11 +34,12 @@ Follow the steps below to run the scripts in a logical order.
 #### Step 1: data_preparation.qmd
 
 Load and prepare the observation data from `data/raw` folder.
-This includes merging of datasets and use simple data filters.
+This includes merging of datasets and data filtering.
 
 #### Step 2: prepare_trait_phylo.qmd
 
 Load and prepare the trait and phylogenetic data from `data/raw` folder.
+Clean up trait dataset and create workflow to create taxonomical tree.
 
 ### Repo structure
 
