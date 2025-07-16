@@ -337,8 +337,8 @@ We get taxonomical information based on the GBIF taxonomic backbone.
 ```{r}
 #| warning: false
 #| message: false
-taxon_matches <- lapply(merged_dfs, function(df) {
-  taxon_matches <- name_backbone_checklist(unique(df$naam_lat))
+taxon_matches <- lapply(filtered_dfs, function(df) {
+  name_backbone_checklist(unique(df$naam_lat))
 })
 
 for (i in names(taxon_matches)) {
@@ -440,7 +440,7 @@ We write out the species list:
 
 ```{r}
 bind_rows(taxon_matches) %>%
-  select(phylum, class, order, family, genus, species, gbifID = speciesKey,
-         verbatimName = verbatim_name) %>%
+  select(phylum, class, order, family, genus, species, gbifID = speciesKey) %>%
+  distinct() %>%
   write_csv(file.path(out_path, "species_list.csv"))
 ```
