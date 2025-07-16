@@ -31,12 +31,16 @@ This repo is made in preparation of the summer school 'Model-based multivariate 
 
 Follow the steps below to run the scripts in a logical order.
 
+<!-- spell-check: ignore:start -->
 #### Step 1: data_preparation.qmd
+<!-- spell-check: ignore:end -->
 
 Load and prepare the observation data from `data/raw` folder.
 This includes merging of datasets and data filtering.
 
+<!-- spell-check: ignore:start -->
 #### Step 2: prepare_trait_phylo.qmd
+<!-- spell-check: ignore:end -->
 
 Load and prepare the trait and phylogenetic data from `data/raw` folder.
 Clean up trait dataset and create workflow to create taxonomical tree.
