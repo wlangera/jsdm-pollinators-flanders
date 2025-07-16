@@ -1,0 +1,33 @@
+---
+title: "Preparation of trait and phylogenetic data"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+# Goal
+
+Load and prepare the trait and phylogenetic data in `data/raw` folder.
+
+```{r}
+#| warning: false
+#| message: false
+# Packages
+library(tidyverse)
+
+# Conflicts
+conflicted::conflicts_prefer(dplyr::filter)
+
+# Paths
+data_path <- here::here("data", "raw")
+out_path <- here::here("data", "intermediate")
+```
+
+# Load data
