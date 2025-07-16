@@ -34,6 +34,7 @@ out_path <- here::here("data", "intermediate")
 
 # Source
 source(file.path(source_path, "get_base.R"))
+source(file.path(source_path, "utils.R"))
 ```
 
 # Load data
@@ -118,7 +119,8 @@ for (i in names(merged_dfs)) {
     filter(precisie < 500) %>%
     ggplot(aes(x = precisie)) +
     geom_histogram() +
-    ggtitle(i)
+    ggtitle(i) +
+    theme_minimal()
   print(p)
 }
 ```
@@ -171,13 +173,15 @@ for (i in names(merged_dfs)) {
 We notice that this is because you can have multiple individuals in a single observation ID (see e.g. [here](https://waarnemingen.be/observation/246980222/), [here](https://waarnemingen.be/observation/178279003/) or [here](https://waarnemingen.be/observation/194235586/)).
 
 We only combine observations if they are identical and sum the numbers.
+We also remove potential absences
 
 ```{r}
 # Sum numbers for identical observations
 merged_dfs <- lapply(merged_dfs, function(df) {
   df %>%
     group_by(across(c(-aantal))) %>% # group by all except "aantal"
-    summarise(aantal = sum(aantal), .groups = "drop")
+    summarise(aantal = sum(aantal), .groups = "drop") %>%
+    filter(aantal > 0) # Remove potential absences
 })
 ```
 
@@ -192,3 +196,117 @@ merged_dfs <- lapply(merged_dfs, function(df) {
     select("id", everything(), -"suffix")
 })
 ```
+
+## Quality filters
+
+<!-- spell-check: ignore:start -->
+
+Van Eupen, C., Maes, D., Herremans, M., Swinnen, K. R., Somers, B., & Luca, S. (2021). The impact of data quality filtering of opportunistic citizen science data on species distribution model performance. *Ecological Modelling, 444*, 109453. <https://doi.org/10.1016/j.ecolmodel.2021.109453>
+
+Van Eupen, C., Maes, D., Herremans, M., Swinnen, K. R., Somers, B., & Luca, S. (2022). Species profiles support recommendations for quality filtering of opportunistic citizen science data. *Ecological Modelling, 467*, 109910. <https://doi.org/10.1016/j.ecolmodel.2022.109910>
+
+<!-- spell-check: ignore:end -->
+
+Filters:
+
+Here’s a concise bullet-point summary for your Quarto document:
+
+* **ACTIVITY**:
+  Filters based on the observer's annual average number of active recording days (2014–2019).
+  Only includes observers who contributed to 80% of the data, using a threshold of ≥92 active days/year (first quartile of this group) as a proxy for observer experience—linked to fewer false positives/negatives.
+
+* **DETAIL**:
+  Filters records that include additional information beyond the default fields (e.g., behaviour, photos, comments).
+  Used as a proxy for observer effort in unstructured data, where more detailed records are considered higher quality.
+
+* **VALSTAT**:
+  Filters based on the record’s validation status in the database.
+  Includes only records marked as **correct**, excluding those marked as **uncertain**, which may lack sufficient information or have not been validated.
+
+### Activity
+
+We do not have data on the observers.
+
+### Detail
+
+Columns of interest:
+
+- `gedrag`: not "onbekend"<!-- spell-check: ignore -->
+
+```{r}
+count_unique_cats(merged_dfs, "gedrag")
+```
+
+- `methode`: not "onbekend" or "NULL"<!-- spell-check: ignore -->
+
+```{r}
+count_unique_cats(merged_dfs, "methode")
+```
+
+- `kleed`: not "onbekend"<!-- spell-check: ignore -->
+
+```{r}
+count_unique_cats(merged_dfs, "kleed")
+```
+
+- `geslacht`: not "onbekend"<!-- spell-check: ignore -->
+
+```{r}
+count_unique_cats(merged_dfs, "geslacht")
+```
+
+- `bijzonderheden`: not `NA` or "NULL"<!-- spell-check: ignore -->
+
+```{r}
+count_unique_cats(merged_dfs, "kleed")
+```
+
+We count the number of additional columns filled in for each observations and look at the distribution.
+
+```{r}
+# Define exclusion rules per column
+exclusion_rules <- list(
+  gedrag = "onbekend",
+  methode = c("onbekend", "NULL"),
+  kleed = "onbekend",
+  geslacht = "onbekend",
+  bijzonderheden = "NULL"
+)
+
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    mutate(n_detail = rowSums(across(
+      all_of(names(exclusion_rules)),
+      ~ is_informative(., exclusion_rules[[cur_column()]])
+    )))
+})
+
+for (i in names(merged_dfs)) {
+  p <- merged_dfs[[i]] %>%
+    count(n_detail) %>%
+    mutate(n_detail = factor(n_detail,
+                             levels = 0:sort(length(exclusion_rules)))) %>%
+    ggplot(aes(x = n_detail, y = n)) +
+    geom_bar(stat = "identity") +
+    geom_text(aes(label = n), vjust = -0.25) +
+    ggtitle(i) +
+    scale_x_discrete(drop = FALSE) +
+    theme_minimal()
+
+  print(p)
+}
+```
+
+We keep the data with a detail score larger than 1.
+
+```{r}
+# Keep detail level 2 and higher
+merged_dfs <- lapply(merged_dfs, function(df) {
+  df %>%
+    filter(n_detail > 1)
+})
+```
+
+### Valstat
+
+We only have this information for the dragonfly dataset.
