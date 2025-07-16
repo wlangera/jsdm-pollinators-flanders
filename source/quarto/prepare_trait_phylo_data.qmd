@@ -21,6 +21,7 @@ Load and prepare the trait and phylogenetic data in `data/raw` folder.
 #| message: false
 # Packages
 library(tidyverse)
+library(ape)
 
 # Conflicts
 conflicted::conflicts_prefer(dplyr::filter)
@@ -114,4 +115,40 @@ trait_data <- trait_data_full[, -1] %>%
 
 ```{r}
 write_csv(trait_data, file.path(out_path, "trait_data_interim.csv"))
+```
+
+# Phylogenetic data
+
+We provide an example script of how to create a taxonomical tree using the **ape** package.
+
+<!-- spell-check: ignore:start -->
+
+Ovaskainen, O., & Abrego, N. (2020). Joint species distribution modelling: With applications in R. Cambridge University Press. https://doi.org/10.1017/9781108591720 (p. 123)
+
+<!-- spell-check: ignore:end -->
+
+We make the example for a small group, the butterflies.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+# Get butterfly data
+butterfly_data <- trait_data %>%
+  filter(pollinatorGroup == "dagvlinders") %>%
+  distinct(species, genus, family, order)
+butterfly_data[c("species", "genus", "family", "order")] <- lapply(
+  butterfly_data[c("species", "genus", "family", "order")],
+  factor
+)
+
+# Create tree
+butterfly_tree <- as.phylo(
+  ~order / family / genus / species,
+  data = butterfly_data,
+  collapse = FALSE
+)
+butterfly_tree$edge.length <- rep(1, length(butterfly_tree$edge))
+
+# Plot tree
+plot(butterfly_tree, edge.width = 2, label.offset = 0.1)
 ```
