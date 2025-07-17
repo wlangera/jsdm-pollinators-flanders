@@ -193,7 +193,7 @@ merged_dfs <- lapply(merged_dfs, function(df) {
   df %>%
     rename("id_obs" = "id") %>%
     mutate(suffix = row_number(), .by = "id_obs") %>%
-    mutate(id = paste(id_obs, suffix, sep = ".")) %>%
+    mutate(id = paste(id_obs, suffix, sep = "_")) %>%
     select("id", everything(), -"suffix")
 })
 ```
