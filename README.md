@@ -45,6 +45,12 @@ This includes merging of datasets and data filtering.
 Load and prepare the trait and phylogenetic data from `data/raw` folder.
 Clean up trait dataset and create workflow to create taxonomical tree.
 
+<!-- spell-check: ignore:start -->
+#### Step 3: calc_environmental_vars.qmd
+<!-- spell-check: ignore:end -->
+
+Filter observation data based on habitat layer and add environmental variables.
+
 ### Repo structure
 
 ```
