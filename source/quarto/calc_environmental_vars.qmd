@@ -98,3 +98,5 @@ table(heather_hab_cat$hab_class)
 ```{r}
 mapview::mapview(heather_hab_cat, zcol = "hab_class", layer.name = "Habitat")
 ```
+
+> Merge neighbouring polygons if they are less then 5 meters apart and belong to the same class
