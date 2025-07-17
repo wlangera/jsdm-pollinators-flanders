@@ -28,7 +28,7 @@ conflicted::conflicts_prefer(dplyr::filter)
 
 # Paths
 data_path <- here::here("data", "raw")
-out_path <- here::here("data", "intermediate")
+interim_path <- here::here("data", "intermediate")
 ```
 
 # Select heather habitat
@@ -135,11 +135,26 @@ We write the layer out.
 ```{r}
 st_write(
   heather_hab_cat_merged,
-  file.path(out_path, "heather_flanders_cat.gpkg")
+  file.path(interim_path, "heather_flanders_cat.gpkg"),
+  append = FALSE
 )
 ```
 
 # Filter observation data
+
+Load observation data of pollinator groups.
+
+```{r}
+poll_groups <- c("bijen", "dagvlinders", "nachtvlinders", "zweefvliegen")
+
+# Read the files and build a named list
+insect_dfs <- lapply(
+  file.path(interim_path, paste0(poll_groups, "_interim_data.csv")),
+  read_csv,
+  show_col_types = FALSE
+)
+names(insect_dfs) <- poll_groups
+```
 
 # Environmental variables
 
