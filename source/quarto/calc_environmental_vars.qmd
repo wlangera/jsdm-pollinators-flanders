@@ -1,0 +1,163 @@
+---
+title: "Calculate environmental variables"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+# Goal
+
+Calculate and add environmental variables to observations.
+
+```{r}
+#| warning: false
+#| message: false
+# Packages
+library(tidyverse)
+library(sf)
+
+# Conflicts
+conflicted::conflicts_prefer(dplyr::filter)
+
+# Paths
+data_path <- here::here("data", "raw")
+interim_path <- here::here("data", "intermediate")
+```
+
+# Select heather habitat
+
+We load and select Natura 2000 heather habitats.
+
+```{r}
+# Load BWK layer
+bwk_flanders <- st_read(file.path(data_path, "BwkHab.shp"))
+
+# Heather starts with 4
+heather_hab <- bwk_flanders %>%
+  filter(grepl("^4", HAB1))
+```
+
+## Categorise habitats
+
+Which habitat types do we get?
+
+```{r}
+table(heather_hab$HAB1)
+```
+
+<!-- spell-check: ignore:start -->
+
+We see:
+
+- 4010: Northern Atlantic wet heaths with *Erica tetralix*
+- 4030: European dry heaths
+- 4010, 4030: mix of above
+- 4010,gh/4030,gh: gh = no habitat
+- 4010,rbbsm: rbbsm = *Myrica gale* bush
+- 4030,bos: in combination with forest
+
+We make the following classification
+
+- wet heaths
+  - HAB1 = 4010|4010,gh|4010,rbbsm
+  - IF PHAB1 >= 60
+- dry heaths
+  - HAB1 = 4030|4010,gh|4030,bos
+  - IF PHAB1 >= 60
+- mixed heaths
+  - HAB1 = 4010, 4030
+  - OR HAB1 = 4010|4030 and HAB2 = 4030|4010 with PHAB1 + PHAB2 >= 70 AND PHAB2 >= 20
+
+<!-- spell-check: ignore:end -->
+
+Other polygons contain not enough habitat and are removed.
+
+```{r}
+heather_hab_cat <- heather_hab %>%
+  mutate(
+    hab_class = case_when(
+      grepl("4010,4030", HAB1) ~ "mixed heath",
+      (grepl("^4010", HAB1) & grepl("^4030", HAB2)) &
+        (PHAB1 + PHAB2 >= 70 & PHAB2 >= 20) ~ "mixed heath",
+      (grepl("^4030", HAB1) & grepl("^4010", HAB2)) &
+        (PHAB1 + PHAB2 >= 70 & PHAB2 >= 20) ~ "mixed heath",
+      grepl("^4010", HAB1) & PHAB1 >= 60 ~ "wet heath",
+      grepl("^4030", HAB1) & PHAB1 >= 60 ~ "dry heath",
+      TRUE ~ "invalid"
+    )
+  ) %>%
+  filter(hab_class != "invalid")
+
+table(heather_hab_cat$hab_class)
+```
+
+## Join polygons
+
+We join neighbouring polygons together if they belong to the same habitat class.
+We calculate surface area of each polygon.
+
+```{r}
+#| warning: false
+heather_hab_cat_merged <- heather_hab_cat %>%
+  group_by(hab_class) %>%
+  summarise(geometry = st_union(geometry), .groups = "drop") %>%
+  st_cast("POLYGON") %>%
+  mutate(id = row_number(),
+         area_m2 = units::drop_units(st_area(geometry))) %>%
+  select(id, hab_class, area_m2, everything())
+```
+
+```{r}
+mapview::mapview(heather_hab_cat_merged, zcol = "hab_class",
+                 layer.name = "Habitat")
+```
+
+We have a good mix of surface are for each habitat class.
+
+```{r}
+heather_hab_cat_merged %>%
+  ggplot(aes(y = log(area_m2), x = hab_class)) +
+  geom_boxplot() +
+  theme_minimal()
+```
+
+## Export layer
+
+We write the layer out.
+
+```{r}
+st_write(
+  heather_hab_cat_merged,
+  file.path(interim_path, "heather_flanders_cat.gpkg"),
+  append = FALSE
+)
+```
+
+# Filter observation data
+
+Load observation data of pollinator groups.
+
+```{r}
+poll_groups <- c("bijen", "dagvlinders", "nachtvlinders", "zweefvliegen")
+
+# Read the files and build a named list
+insect_dfs <- lapply(
+  file.path(interim_path, paste0(poll_groups, "_interim_data.csv")),
+  read_csv,
+  show_col_types = FALSE
+)
+names(insect_dfs) <- poll_groups
+```
+
+# Environmental variables
+
+# Sampling effort
+
+> calculate total number of observations per kilometre square over all groups
