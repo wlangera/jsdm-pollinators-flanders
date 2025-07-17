@@ -28,11 +28,12 @@ conflicted::conflicts_prefer(dplyr::filter)
 
 # Paths
 data_path <- here::here("data", "raw")
+out_path <- here::here("data", "intermediate")
 ```
 
 # Select heather habitat
 
-We get Natura 2000 heather habitats.
+We load and select Natura 2000 heather habitats.
 
 ```{r}
 # Load BWK layer
@@ -42,6 +43,8 @@ bwk_flanders <- st_read(file.path(data_path, "BwkHab.shp"))
 heather_hab <- bwk_flanders %>%
   filter(grepl("^4", HAB1))
 ```
+
+## Categorise habitats
 
 Which habitat types do we get?
 
@@ -95,8 +98,51 @@ heather_hab_cat <- heather_hab %>%
 table(heather_hab_cat$hab_class)
 ```
 
+## Join polygons
+
+We join neighbouring polygons together if they belong to the same habitat class.
+We calculate surface area of each polygon.
+
 ```{r}
-mapview::mapview(heather_hab_cat, zcol = "hab_class", layer.name = "Habitat")
+#| warning: false
+heather_hab_cat_merged <- heather_hab_cat %>%
+  group_by(hab_class) %>%
+  summarise(geometry = st_union(geometry), .groups = "drop") %>%
+  st_cast("POLYGON") %>%
+  mutate(id = row_number(),
+         area_m2 = units::drop_units(st_area(geometry))) %>%
+  select(id, hab_class, area_m2, everything())
 ```
 
-> Merge neighbouring polygons if they are less then 5 meters apart and belong to the same class
+```{r}
+mapview::mapview(heather_hab_cat_merged, zcol = "hab_class",
+                 layer.name = "Habitat")
+```
+
+We have a good mix of surface are for each habitat class.
+
+```{r}
+heather_hab_cat_merged %>%
+  ggplot(aes(y = log(area_m2), x = hab_class)) +
+  geom_boxplot() +
+  theme_minimal()
+```
+
+## Export layer
+
+We write the layer out.
+
+```{r}
+st_write(
+  heather_hab_cat_merged,
+  file.path(out_path, "heather_flanders_cat.gpkg")
+)
+```
+
+# Filter observation data
+
+# Environmental variables
+
+# Sampling effort
+
+> calculate total number of observations per kilometre square over all groups
