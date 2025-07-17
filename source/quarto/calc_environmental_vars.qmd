@@ -1,0 +1,100 @@
+---
+title: "Calculate environmental variables"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+# Goal
+
+Calculate and add environmental variables to observations.
+
+```{r}
+#| warning: false
+#| message: false
+# Packages
+library(tidyverse)
+library(sf)
+
+# Conflicts
+conflicted::conflicts_prefer(dplyr::filter)
+
+# Paths
+data_path <- here::here("data", "raw")
+```
+
+# Select heather habitat
+
+We get Natura 2000 heather habitats.
+
+```{r}
+# Load BWK layer
+bwk_flanders <- st_read(file.path(data_path, "BwkHab.shp"))
+
+# Heather starts with 4
+heather_hab <- bwk_flanders %>%
+  filter(grepl("^4", HAB1))
+```
+
+Which habitat types do we get?
+
+```{r}
+table(heather_hab$HAB1)
+```
+
+<!-- spell-check: ignore:start -->
+
+We see:
+
+- 4010: Northern Atlantic wet heaths with *Erica tetralix*
+- 4030: European dry heaths
+- 4010, 4030: mix of above
+- 4010,gh/4030,gh: gh = no habitat
+- 4010,rbbsm: rbbsm = *Myrica gale* bush
+- 4030,bos: in combination with forest
+
+We make the following classification
+
+- wet heaths
+  - HAB1 = 4010|4010,gh|4010,rbbsm
+  - IF PHAB1 >= 60
+- dry heaths
+  - HAB1 = 4030|4010,gh|4030,bos
+  - IF PHAB1 >= 60
+- mixed heaths
+  - HAB1 = 4010, 4030
+  - OR HAB1 = 4010|4030 and HAB2 = 4030|4010 with PHAB1 + PHAB2 >= 70 AND PHAB2 >= 20
+
+<!-- spell-check: ignore:end -->
+
+Other polygons contain not enough habitat and are removed.
+
+```{r}
+heather_hab_cat <- heather_hab %>%
+  mutate(
+    hab_class = case_when(
+      grepl("4010,4030", HAB1) ~ "mixed heath",
+      (grepl("^4010", HAB1) & grepl("^4030", HAB2)) &
+        (PHAB1 + PHAB2 >= 70 & PHAB2 >= 20) ~ "mixed heath",
+      (grepl("^4030", HAB1) & grepl("^4010", HAB2)) &
+        (PHAB1 + PHAB2 >= 70 & PHAB2 >= 20) ~ "mixed heath",
+      grepl("^4010", HAB1) & PHAB1 >= 60 ~ "wet heath",
+      grepl("^4030", HAB1) & PHAB1 >= 60 ~ "dry heath",
+      TRUE ~ "invalid"
+    )
+  ) %>%
+  filter(hab_class != "invalid")
+
+table(heather_hab_cat$hab_class)
+```
+
+```{r}
+mapview::mapview(heather_hab_cat, zcol = "hab_class", layer.name = "Habitat")
+```
