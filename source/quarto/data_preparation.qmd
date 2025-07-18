@@ -308,7 +308,7 @@ for (i in names(merged_dfs)) {
 }
 ```
 
-We keep all data "Goedgekeurd op basis van bewijsmateriaal".
+We keep all data "Goedgekeurd op basis van bewijsmateriaal".<!-- spell-check: ignore -->
 We keep the the rest of the data if they have a detail score larger than 1.
 
 ```{r}
@@ -363,7 +363,7 @@ We also add a column with the name of the pollinator group.
 
 ```{r}
 poll_groups <- c("bijen" = "bees", "dagvlinders" = "butterflies",
-                 "nachtvlinders" = "moths", "zweefvliegen" = "hoverflies", 
+                 "nachtvlinders" = "moths", "zweefvliegen" = "hoverflies",
                  "libellen" = "dragonflies")
 
 # Join taxonomic information

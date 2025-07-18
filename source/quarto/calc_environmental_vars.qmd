@@ -30,7 +30,7 @@ conflicted::conflicts_prefer(dplyr::filter)
 data_path <- here::here("data", "raw")
 interim_path <- here::here("data", "intermediate")
 out_path <- here::here("data", "processed")
-  
+
 # Global variables
 proj_crs <- 31370
 ```
@@ -260,8 +260,7 @@ pca$rotation %>%
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_vline(xintercept = 0, linetype = "dashed") +
   geom_point() +
-  geom_text(aes(label = climVar),
-              nudge_x = -0.05, nudge_y = 0.02)
+  geom_text(aes(label = climVar), nudge_x = -0.05, nudge_y = 0.02)
 ```
 
 We also select a subset of the variables as such.
