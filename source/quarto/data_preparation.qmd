@@ -101,6 +101,10 @@ merged_dfs <- lapply(merged_dfs, function(df) {
 We select data that has been validated.
 
 ```{r}
+count_unique_cats(merged_dfs, "status")
+```
+
+```{r}
 # Select validated data
 merged_dfs <- lapply(merged_dfs, function(df) {
   df %>%
@@ -304,13 +308,16 @@ for (i in names(merged_dfs)) {
 }
 ```
 
-We keep the data with a detail score larger than 1.
+We keep all data "Goedgekeurd op basis van bewijsmateriaal".
+We keep the the rest of the data if they have a detail score larger than 1.
 
 ```{r}
 # Keep detail level 2 and higher
 merged_dfs <- lapply(merged_dfs, function(df) {
   df %>%
-    filter(n_detail > 1)
+    filter(
+      !(status != "Goedgekeurd op basis van bewijsmateriaal" & n_detail <= 1)
+    )
 })
 ```
 
@@ -355,6 +362,10 @@ We select the columns of interest and move subspecies to species level.
 We also add a column with the name of the pollinator group.
 
 ```{r}
+poll_groups <- c("bijen" = "bees", "dagvlinders" = "butterflies",
+                 "nachtvlinders" = "moths", "zweefvliegen" = "hoverflies", 
+                 "libellen" = "dragonflies")
+
 # Join taxonomic information
 filtered_dfs <- lapply(names(merged_dfs), function(name) {
   obs_df <- filtered_dfs[[name]]
@@ -364,7 +375,7 @@ filtered_dfs <- lapply(names(merged_dfs), function(name) {
 
   obs_df %>%
     left_join(taxa_df, by = join_by(naam_lat)) %>%
-    mutate(pollinator_group = name)
+    mutate(pollinator_group = poll_groups[[name]])
 })
 names(filtered_dfs) <- names(merged_dfs)
 ```
@@ -427,7 +438,7 @@ We write out the observations datasets:
 ```{r}
 for (i in names(filtered_dfs)) {
   # Create file path
-  file_name <- paste0(i, "_interim_data.csv")
+  file_name <- paste0(poll_groups[[i]], "_interim_data.csv")
   path_full <- file.path(out_path, file_name)
 
   # Write out dataset as csv

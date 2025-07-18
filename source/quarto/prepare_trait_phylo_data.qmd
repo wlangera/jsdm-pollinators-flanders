@@ -65,8 +65,11 @@ trait_data_full <- trait_data_raw %>%
 ```{r}
 trait_data <- trait_data_full[, -1] %>%
   mutate(
-    pollinatorGroup = ifelse(
-      Bestuiversgroep == "macro-nachtvlinders", "nachtvlinders", Bestuiversgroep
+    pollinatorGroup = case_when(
+      Bestuiversgroep == "bijen" ~ "bees",
+      Bestuiversgroep == "dagvlinders" ~ "butterflies",
+      Bestuiversgroep == "macro-nachtvlinders" ~ "moths",
+      Bestuiversgroep == "zweefvliegen" ~ "hoverflies"
     )
   ) %>%
   select(
