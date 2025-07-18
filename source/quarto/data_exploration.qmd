@@ -14,7 +14,7 @@ editor_options:
 
 # Goal
 
-Calculate and add environmental variables to observations.
+Data exploration.
 
 ```{r}
 #| warning: false
@@ -29,3 +29,26 @@ conflicted::conflicts_prefer(dplyr::filter)
 interim_path <- here::here("data", "intermediate")
 data_path <- here::here("data", "processed")
 ```
+
+# Load data
+
+Load observation data of pollinator groups.
+
+```{r}
+poll_groups <- c("bees", "butterflies", "moths", "hoverflies")
+
+# Read the files and build a named list
+pollinator_obs_df <- lapply(
+  file.path(data_path, paste0(poll_groups, "_data.csv")),
+  read_csv,
+  show_col_types = FALSE
+)
+names(pollinator_obs_df) <- poll_groups
+```
+
+# Univariate
+
+# Bivariate
+## Categorical
+
+## Continuous
