@@ -349,7 +349,12 @@ for (i in seq_along(names(pollinator_obs_final))) {
   path_full <- file.path(out_path, file_name)
 
   # Write out dataset as csv
-  write_csv(pollinator_obs_final[[names(pollinator_obs_final)[i]]], path_full)
+  write_csv(
+    st_drop_geometry(
+      pollinator_obs_final[[names(pollinator_obs_final)[i]]]
+    ),
+    path_full
+  )
   print(paste("Dataset written to", path_full))
 }
 ```
