@@ -86,7 +86,7 @@ for (i in names(pollinator_obs_df)) {
     geom_bar(stat = "identity") +
     labs(x = "Number of observations", y = "") +
     theme_minimal()
-  
+
   print(p)
 }
 ```
@@ -114,7 +114,7 @@ for (i in names(pollinator_obs_df)) {
     geom_bar(stat = "identity") +
     labs(x = "Number of occupied UTM1 squares (sampling effort)", y = "") +
     theme_minimal()
-  
+
   print(p)
 }
 ```
@@ -133,7 +133,7 @@ common_specs <- lapply(pollinator_obs_df, function(df) {
     ) %>%
     slice_max(n, n = 50) %>%
     mutate(species = reorder(species, n)) %>%
-    pull(species) 
+    pull(species)
 })
 ```
 
