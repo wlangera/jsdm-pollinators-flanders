@@ -1,0 +1,31 @@
+---
+title: "Data exploration"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+# Goal
+
+Calculate and add environmental variables to observations.
+
+```{r}
+#| warning: false
+#| message: false
+# Packages
+library(tidyverse)
+
+# Conflicts
+conflicted::conflicts_prefer(dplyr::filter)
+
+# Paths
+interim_path <- here::here("data", "intermediate")
+data_path <- here::here("data", "processed")
+```
