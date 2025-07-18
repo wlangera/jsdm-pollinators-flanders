@@ -314,6 +314,7 @@ bind_rows(pollinator_obs_climvar) %>%
 ## Soil layer
 
 
+
 # Sampling effort
 
 We calculate total number of observations per kilometre square (UTM 1 km grid) over all pollinator groups.
