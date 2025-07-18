@@ -48,7 +48,38 @@ names(pollinator_obs_df) <- poll_groups
 
 # Univariate
 
+Number of observations per pollinator group.
+
+```{r}
+bind_rows(pollinator_obs_df) %>%
+  count(pollinatorGroup) %>%
+  ggplot(aes(x = pollinatorGroup, y = n)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = n), vjust = -0.25) +
+  labs(x = "", y = "Number of observations") +
+  theme_minimal()
+```
+
+Number of species per pollinator group.
+
+```{r}
+bind_rows(pollinator_obs_df) %>%
+  group_by(pollinatorGroup) %>%
+  summarise(n_spec = n_distinct(species), .groups = "drop") %>%
+  ggplot(aes(x = pollinatorGroup, y = n_spec)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = n_spec), vjust = -0.25) +
+  labs(x = "", y = "Number of species") +
+  theme_minimal()
+```
+
 # Bivariate
 ## Categorical
+### Habitat class
+
+### Soil class
 
 ## Continuous
+### Size of habitat parcels
+
+### Climate variables
