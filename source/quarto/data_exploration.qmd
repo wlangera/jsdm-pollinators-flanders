@@ -91,8 +91,7 @@ for (i in names(pollinator_obs_df)) {
 }
 ```
 
-There are some very rare species here.
-Gentiaanblauwtje is definitely not more common than Groot koolwitje.
+There are some very rare species here that seem more common than species we know are more common.
 
 We look at species that occur in most UTM1 kilometre squares.
 However, some grid cells have been visited more than others.
