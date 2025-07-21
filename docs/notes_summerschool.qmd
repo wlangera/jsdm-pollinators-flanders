@@ -24,18 +24,18 @@ Hjerkinn, Norway
 
 |   Day   |Time         |Subject                                                         |Lecturer|
 |---------|-------------|:---------------------------------------------------------------|:-------|
-|Monday   |<sub>09:00 - 09:30</sub>| Welcome, introduction, getting started              |Bert    |
+|Monday   |<sub>09:00 - 09:30</sub>| [Welcome, introduction, getting started](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/Introduction.pdf)              |Bert    |
 |         |<sub>09:30 - 10:15</sub>| [Lecture: Modeling data from ecological communities](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/CommunityData.pdf)           |        |
 |         |<sub>10:15 - 10:45</sub>| ☕ Break                                             |        |
-|         |<sub>10:45 - 11:15</sub>| Discussion: properties of community data            |        | <!-- short group-based disucssion (getting to know each other), also what they expect to be an issue/should be addressed -->
+|         |<sub>10:45 - 11:15</sub>| Icebreaker/group discussion: properties of community data            |        | <!-- short group-based disucssion (getting to know each other), also what they expect to be an issue/should be addressed -->
 |         |<sub>11:15 - 12:00</sub>| [Lecture: Generalised Linear Models for multiple species](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/GLMs.pdf)      |        | <!-- distributions and such-->
-|         |<sub>12:00 - 13:00</sub>| 🍽 Lunch                                            |        |
-|         |<sub>13:00 - 14:00</sub>| Practical 2: Fitting GLMs                           |        | <!--add VGLM to this practical-->
-|         |<sub>14:00 - 14:45</sub>| [Lecture: Finding a good multispecies GLM](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/ModelComparison.pdf)                     |        |<!-- what it means to have multiple species -->
-|         |<sub>14:45 - 15:15</sub>| ☕ Break                                             |        |
-|         |<sub>15:15 - 16:15</sub>| Practical 3: Comparing multispecies GLMs            |        | <!-- model selection, hypo testing ?-->
-|         |<sub>16:15 - 17:00</sub>| Lecture: Introduction to the gllvm R-package                 |Bert/Pekka   |
-|         |<sub>17:00 - 19:30</sub>| Free time + 🍽 Dinner                                        |        |
+|         |<sub>12:30 - 13:30</sub>| 🍽 Lunch                                            |        |
+|         |<sub>13:30 - 14:30</sub>| Practical 2: Fitting GLMs                           |        | <!--add VGLM to this practical-->
+|         |<sub>14:30 - 15:15</sub>| [Lecture: Finding a good multispecies GLM](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/ModelComparison.pdf)                     |        |<!-- what it means to have multiple species -->
+|         |<sub>15:15 - 15:30</sub>| ☕ Break                                             |        |
+|         |<sub>15:30 - 16:30</sub>| Practical 3: Comparing multispecies GLMs            |        | <!-- model selection, hypo testing ?-->
+|         |<sub>16:30 - 17:15</sub>| [Lecture: Introduction to the gllvm R-package](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/gllvm_intro.pdf)                 |Pekka/Bert   |
+|         |<sub>17:15 - 19:30</sub>| Free time + 🍽 Dinner                                        |        |
 |         |<sub>19:30 - 20:30</sub>| Recap of the day                                    |Bert    |
 
 ## 09:00 - 09:30 Welcome, introduction, getting started
@@ -115,15 +115,67 @@ Hjerkinn, Norway
     - range of y is bounded
   - parameters need to be estimated iteratively
      - numerical optimization
-- Example 1
-  - Swiss birds
+- Example 1: Swiss birds
   - binomial model
   - c-loglog link function: use when truncated counts (e.g. you know there are more than 1 but not how much)
   - species respond different to slope, too simplistic
-  - 
-- Example 2
+  - different types of parametrisations
+- Example 2: macroinvertebrate counts in USA desert
+  - again no common effect
 - Vector GLMs
+  - Before, one GLM over all species
+  - in VGLM each species gets own dispersion parameter --> slightly more flexible
+  - software
+    - VGAM, glmmTMB, gllvm
+  - also MLE estimation --> same likelihood as GLM but now we have $\phi_j$ instead of $\phi$
+  - gllvm
+    - published in 2019
+    - fitted in C++
+  - downside is that we have now more parameters per species, need enough data per species
+  - assumes independence of species --> JSDMs tomorrow
+  - no random effects
 
-## 13:00 - 14:00 Practical 2: Fitting GLMs   
+## 13:00 - 14:00 Practical 2: Fitting GLMs
+
+- see fork
 
 ## 14:00 - 14:45 Lecture: Finding a good multispecies GLM
+
+- background
+- example 1
+- hypothesis testing
+- example 2
+- information criteria
+  - don't take the best model paradigm too seriously
+  - use common sense, do not blindly test all
+- example 3
+  - omitted variable bias
+  - which model
+    - simpler model
+    - report multiple models
+- residuals
+  - assumptions
+    - no outliers
+    - independent observations
+    - correct distribution
+    - correct link function
+    - correct variance funciton
+    - no systematic departure from the model
+  - multiple kinds of residuals
+    - complicated
+  - graphical diagnostic (see practical)
+    - residuals versus fitted
+    - QQ plot
+      - check whether it is the right distribution
+- summary
+
+## 15:30 - 16:30 Practical 3: Comparing multispecies GLMs
+
+- see fork
+
+## 16:30 - 17:15 Lecture: Introduction to the gllvm R-package
+
+- focus on ordination and species co-occurrence
+- fast estimation
+
+## 19:30 - 20:30 Recap of the day
