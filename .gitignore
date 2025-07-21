@@ -16,7 +16,6 @@
 *.shx
 *.xls*
 *_files
-docs
 libs
 output
 renv/library

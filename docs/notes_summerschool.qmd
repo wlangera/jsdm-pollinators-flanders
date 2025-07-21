@@ -1,0 +1,53 @@
+---
+title: "Notes summer school 'Model-based multivariate analysis for ecologists'"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+21st-25th of July 2025
+
+Hjerkinn, Norway
+
+https://bertv.folk.ntnu.no/
+
+https://github.com/BertvanderVeen/SSMA
+
+# Day 1
+
+|   Day   |Time         |Subject                                                         |Lecturer|
+|---------|-------------|:---------------------------------------------------------------|:-------|
+|Monday   |<sub>09:00 - 09:30</sub>| Welcome, introduction, getting started              |Bert    |
+|         |<sub>09:30 - 10:15</sub>| [Lecture: Modeling data from ecological communities](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/CommunityData.pdf)           |        |
+|         |<sub>10:15 - 10:45</sub>| ☕ Break                                             |        |
+|         |<sub>10:45 - 11:15</sub>| Discussion: properties of community data            |        | <!-- short group-based disucssion (getting to know each other), also what they expect to be an issue/should be addressed -->
+|         |<sub>11:15 - 12:00</sub>| [Lecture: Generalised Linear Models for multiple species](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/GLMs.pdf)      |        | <!-- distributions and such-->
+|         |<sub>12:00 - 13:00</sub>| 🍽 Lunch                                            |        |
+|         |<sub>13:00 - 14:00</sub>| Practical 2: Fitting GLMs                           |        | <!--add VGLM to this practical-->
+|         |<sub>14:00 - 14:45</sub>| [Lecture: Finding a good multispecies GLM](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/ModelComparison.pdf)                     |        |<!-- what it means to have multiple species -->
+|         |<sub>14:45 - 15:15</sub>| ☕ Break                                             |        |
+|         |<sub>15:15 - 16:15</sub>| Practical 3: Comparing multispecies GLMs            |        | <!-- model selection, hypo testing ?-->
+|         |<sub>16:15 - 17:00</sub>| Lecture: Introduction to the gllvm R-package                 |Bert/Pekka   |
+|         |<sub>17:00 - 19:30</sub>| Free time + 🍽 Dinner                                        |        |
+|         |<sub>19:30 - 20:30</sub>| Recap of the day                                    |Bert    |
+
+## 09:00 - 09:30 Welcome, introduction, getting started
+
+
+
+## 09:30 - 10:15 Lecture: Modeling data from ecological communities
+
+
+## 10:45 - 11:15 Discussion: properties of community data
+
+
+## 11:15 - 12:00 Lecture: Generalised Linear Models for multiple species
+
+
