@@ -137,7 +137,7 @@ We make the example for a small group, the butterflies.
 #| fig-height: 10
 # Get butterfly data
 butterfly_data <- trait_data %>%
-  filter(pollinatorGroup == "dagvlinders") %>%
+  filter(pollinatorGroup == "butterflies") %>%
   distinct(species, genus, family, order)
 butterfly_data[c("species", "genus", "family", "order")] <- lapply(
   butterfly_data[c("species", "genus", "family", "order")],
