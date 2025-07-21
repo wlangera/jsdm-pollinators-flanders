@@ -16,9 +16,9 @@ editor_options:
 
 Hjerkinn, Norway
 
-https://bertv.folk.ntnu.no/
+<https://bertv.folk.ntnu.no/>
 
-https://github.com/BertvanderVeen/SSMA
+<https://github.com/BertvanderVeen/SSMA>
 
 # Day 1
 
@@ -40,14 +40,90 @@ https://github.com/BertvanderVeen/SSMA
 
 ## 09:00 - 09:30 Welcome, introduction, getting started
 
-
+- welcome
+- introductions of everyone
+- logistics and planning of the week
+- overview
+  - introduction
+  - motivation
+  - history
+  - contemporary multivariate analysis
+    - VGLM: vector models (multiple species)
+    - JSDM
+    - model based ordination
+  - conclusions
 
 ## 09:30 - 10:15 Lecture: Modeling data from ecological communities
 
 
+- sampling data
+  - basic thinking about study design and data properties
+  - sampling variation
+    - where we look, when we look, how often we look, resources available, who looks ...
+    --> adjust our analysis
+  - preferential sampling 
+    - e.g. "I sample on an elevation gradient"
+      - predefined community, environment --> effects results
+    - consequences
+      - few observations (lots of zeroes)
+      - common versus rare species
+  - sample size
+    - trade-off work, time, mony
+  - minimize impact of sampling process
+    - a priori --> sampling design
+  - detection bias
+  - classification error
+- data properties
+- models
+  - traditional models do not deal with data properties appropriately
+    - classic: "we adjust the model, not the data" --> data is fixed
+  - process thinking
+    1. sampling effect
+    2. ecological effect
+- uncertainty
+  - *skip theory*
+  - "we are not interested in the answer for this dataset, but for an answer for all datasets"
+- summary
+  - most data properties can be accommodated with models
+  - requires consideration
+  - choose the appropriate model, not the software you like
+    - "if you have a hammer, every problem is a nail"
+  - some properties are more difficult to accommodate
+  - many issues (sparsity, sample size ...) do not show in traditional methods
+  - models will be more honest to you
+
 ## 10:45 - 11:15 Discussion: properties of community data
 
+- density data
+- proportion coverage
+- presence only
+  - sampling effort
+  - spatial bias
+  - observer bias
 
 ## 11:15 - 12:00 Lecture: Generalised Linear Models for multiple species
 
+- Outline
+  - GLMs can deal with multiple data types
+- Species-environment
+  - GLMs align with ecological processes
+  - Ecological community: group of more species living together at the same time
+  - Ecological gradients
+- GLM background
+  - relax normality and homoscedasticity
+    - variance changes with the mean
+    - range of y is bounded
+  - parameters need to be estimated iteratively
+     - numerical optimization
+- Example 1
+  - Swiss birds
+  - binomial model
+  - c-loglog link function: use when truncated counts (e.g. you know there are more than 1 but not how much)
+  - species respond different to slope, too simplistic
+  - 
+- Example 2
+- Vector GLMs
 
+## 13:00 - 14:00 Practical 2: Fitting GLMs   
+
+## 14:00 - 14:45 Lecture: Finding a good multispecies GLM
