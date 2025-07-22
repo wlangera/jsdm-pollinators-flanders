@@ -294,4 +294,7 @@ Hjerkinn, Norway
   - gllvm: nearest tips -> find order
 - summary
 
-## 19:30 - 20:30 Practical 7: Traits and the phylogenetic model 
+## 19:30 - 20:30 Practical 7: Traits and the phylogenetic model
+
+- see fork
+
