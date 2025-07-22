@@ -265,7 +265,7 @@ Hjerkinn, Norway
 - GLLVM
   - use of correlation matrix structure `corAR1` (temporal)
   - use of kernel functions `corExp` (spatial)
-- function of lat and long in fixed effect vs 
+- function of latitude and longitude in fixed effect vs 
   - works for interpolation, but not for extrapolation (then kernel is better)
 
 ## 15:15 - 16:15 Practical 6: Spatial or temporal JSDMs
