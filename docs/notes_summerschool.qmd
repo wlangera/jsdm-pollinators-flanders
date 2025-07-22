@@ -68,7 +68,7 @@ Hjerkinn, Norway
       - few observations (lots of zeroes)
       - common versus rare species
   - sample size
-    - trade-off work, time, mony
+    - trade-off work, time, money
   - minimize impact of sampling process
     - a priori --> sampling design
   - detection bias
@@ -159,7 +159,7 @@ Hjerkinn, Norway
     - independent observations
     - correct distribution
     - correct link function
-    - correct variance funciton
+    - correct variance function
     - no systematic departure from the model
   - multiple kinds of residuals
     - complicated
@@ -179,3 +179,74 @@ Hjerkinn, Norway
 - fast estimation
 
 ## 19:30 - 20:30 Recap of the day
+
+# Day 2
+
+|Tuesday  |<sub>09:00 - 09:45</sub>| [Lecture: Multispecies mixed effects models](https://github.com/BertvanderVeen/SSMA/blob/main/Tuesday/MGLMM.pdf)                   |Jenni   |
+|         |<sub>09:45 - 10:45</sub>| Practical 4: Fitting mixed-effects models           |        |
+|         |<sub>10:45 - 11:15</sub>| ☕ Break                                             |        |
+|         |<sub>11:15 - 12:00</sub>| [Lecture: Joint Species Distribution Models (JSDMs)](https://github.com/BertvanderVeen/SSMA/blob/main/Tuesday/JSDM.pdf)           |Pekka   |
+|         |<sub>12:00 - 13:00</sub>| 🍽 Lunch                                            |        |
+|         |<sub>13:00 - 14:00</sub>| Practical 5: Fitting JSDMs                          |        |
+|         |<sub>14:00 - 14:45</sub>| [Lecture: Accommodating spatial or temporal autocorrelation](https://github.com/BertvanderVeen/SSMA/blob/main/Tuesday/spatialGLLVM.pdf)   |        |
+|         |<sub>14:45 - 15:15</sub>| ☕ Break                                             |        |
+|         |<sub>15:15 - 16:15</sub>| Practical 6: Spatial or temporal JSDMs              |        |
+|         |<sub>16:15 - 17:00</sub>| [Lecture: Hierarchical environmental responses](https://github.com/BertvanderVeen/SSMA/blob/main/Tuesday/HierarchicalResponses.pdf)                |Bert    |
+|         |<sub>17:00 - 19:30</sub>| Free time + 🍽 Dinner                                        |        |
+|         |<sub>19:30 - 20:30</sub>| Practical 7: Traits and the phylogenetic model      |Bert    |
+
+## 09:00 - 09:45 Lecture: Multispecies mixed effects models
+
+- mixed models
+  - mixed effects model = fixed and random effects
+  - when do we need a mixed effects model
+    - hierarchical/nested sampling designs
+    - correlated measurements
+    - correlation between species
+- R packages
+  - gllvm
+  - random effects for species or observational units/clusters
+- Species specific random effects
+  - specific arguments and coding for species specific REs
+  - `formula` argument
+  - grouping variable should have at least 5 levels to estimate a variance
+- Example 1
+  - shrinkage happens because you specify the random effects are normally distributed, so large values are not very likely ("shrunk to zero")
+    - very large values are often just due to data deficiency so it is better that they are close to zero with large CI that overlaps with zero, than to have a very big effect
+    - **gllvm** specifies the random effects relative to the average of the community, so there is shrinkage towards the mean across species with argument `betaCom`
+    - "if we do not have enough information for any particular species to estimate its effect, it reverts to the average of the whole community"
+- Community level random effects
+  - `row.eff` argument
+  - add study design in argument for nested design
+- Example 2
+- Diversity
+  - link between alpha, beta, gamma diversity and statistics
+
+## 09:45 - 10:45 Practical 4: Fitting mixed-effects models
+
+- see fork
+- by default everything is species specific
+  - `row.eff` used for species common effects, not good practise to omit it `~1` but it is possible
+    - random effects are the same for all species
+    - e.g. pit fall trap effect is the same for all species --> in row effect
+  - `formula` --> species specific effects
+
+## 11:15 - 12:00 Lecture: Joint Species Distribution Models (JSDMs)
+
+- outline
+- background
+  - importance of correlation and independence in the data
+- JSDM
+  - developed 10 years ago to incorporate covariation of species for better predictions
+  - questions
+    - how does the environment structure the community?
+    - how do trait affect species responses to the environment?
+    - how do co-evolutionary stuff effect?
+    - do species co-occur after the environment has been considered?
+- example 1
+- GLLVM
+  - dimension reduction
+- prediction
+  - how many latent variables?
+    - trade-off accuracy versus computational speed
+- example 2
