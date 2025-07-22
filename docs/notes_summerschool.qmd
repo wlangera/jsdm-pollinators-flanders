@@ -250,3 +250,48 @@ Hjerkinn, Norway
   - how many latent variables?
     - trade-off accuracy versus computational speed
 - example 2
+
+## 13:00 - 14:00 Practical 5: Fitting JSDMs
+
+- see fork
+
+## 14:00 - 14:45 Lecture: Accommodating spatial or temporal autocorrelation
+
+- it's difficult
+- other types of correlations then species correlations
+  - changes in type (e.g. seasonal)
+  - geographical region
+  - nested aspect of study
+- GLLVM
+  - use of correlation matrix structure `corAR1` (temporal)
+  - use of kernel functions `corExp` (spatial)
+- function of lat and long in fixed effect vs 
+  - works for interpolation, but not for extrapolation (then kernel is better)
+
+## 15:15 - 16:15 Practical 6: Spatial or temporal JSDMs
+
+- see fork
+
+## 16:15 - 17:00 Lecture: Hierarchical environmental responses
+
+-outline
+- the 4th corner
+  - why do species prefer certain environmental conditions?
+  - trait ~ any species specific covariate
+    - you often measure individuals, not species!
+- example 1
+- hierarchical responses
+  - limitation: it assumes that species environmental responses are fully determined by the traits
+  - solution: add random effect per species
+    - hierarchical model per species environment response
+    - if you do not do this, you get inflated type I errors
+    - issue: slower calculation
+- community phylogenetics
+  - related species might have similar traits/might have similar responses to the environment
+  - stochastic model for trait evolution
+    - Brownian motion
+- example 2
+  - gllvm: nearest tips -> find order
+- summary
+
+## 19:30 - 20:30 Practical 7: Traits and the phylogenetic model 
