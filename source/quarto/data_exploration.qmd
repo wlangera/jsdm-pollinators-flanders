@@ -1,0 +1,177 @@
+---
+title: "Data exploration"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+# Goal
+
+Data exploration.
+
+```{r}
+#| warning: false
+#| message: false
+# Packages
+library(tidyverse)
+
+# Conflicts
+conflicted::conflicts_prefer(dplyr::filter)
+
+# Paths
+interim_path <- here::here("data", "intermediate")
+data_path <- here::here("data", "processed")
+```
+
+# Load data
+
+Load observation data of pollinator groups.
+
+```{r}
+poll_groups <- c("bees", "butterflies", "moths", "hoverflies")
+
+# Read the files and build a named list
+pollinator_obs_df <- lapply(
+  file.path(data_path, paste0(poll_groups, "_data.csv")),
+  read_csv,
+  show_col_types = FALSE
+)
+names(pollinator_obs_df) <- poll_groups
+```
+
+# Univariate
+
+Number of observations per pollinator group.
+
+```{r}
+bind_rows(pollinator_obs_df) %>%
+  count(pollinatorGroup) %>%
+  ggplot(aes(x = pollinatorGroup, y = n)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = n), vjust = -0.25) +
+  labs(x = "", y = "Number of observations") +
+  theme_minimal()
+```
+
+Number of species per pollinator group.
+
+```{r}
+bind_rows(pollinator_obs_df) %>%
+  group_by(pollinatorGroup) %>%
+  summarise(n_spec = n_distinct(species), .groups = "drop") %>%
+  ggplot(aes(x = pollinatorGroup, y = n_spec)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = n_spec), vjust = -0.25) +
+  labs(x = "", y = "Number of species") +
+  theme_minimal()
+```
+
+We look at the 50 most common observed per group.
+We do not account for sampling effort.
+
+```{r}
+for (i in names(pollinator_obs_df)) {
+  p <- pollinator_obs_df[[i]] %>%
+    count(vernacularName) %>%
+    slice_max(n, n = 50) %>%
+    mutate(vernacularName = reorder(vernacularName, n)) %>%
+    ggplot(aes(x = n, y = vernacularName)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Number of observations", y = "") +
+    theme_minimal()
+
+  print(p)
+}
+```
+
+There are some very rare species here that seem more common than species we know are more common.
+
+We look at species that occur in most UTM1 kilometre squares.
+However, some grid cells have been visited more than others.
+We divide the number of grid cells per species by the sum of the sampling effort (number of observation for each cells).
+
+```{r}
+for (i in names(pollinator_obs_df)) {
+  p <- pollinator_obs_df[[i]] %>%
+    distinct(vernacularName, utm1, samplingEffort) %>%
+    summarise(
+      n = n(),
+      effort = sum(samplingEffort),
+      test = n / effort,
+      .by = "vernacularName"
+    ) %>%
+    slice_max(n, n = 50) %>%
+    mutate(vernacularName = reorder(vernacularName, n)) %>%
+    ggplot(aes(x = n, y = vernacularName)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Number of occupied UTM1 squares (sampling effort)", y = "") +
+    theme_minimal()
+
+  print(p)
+}
+```
+
+This looks like a good representation for commonness.
+
+```{r}
+common_specs <- lapply(pollinator_obs_df, function(df) {
+  df %>%
+    distinct(species, utm1, samplingEffort) %>%
+    summarise(
+      n = n(),
+      effort = sum(samplingEffort),
+      test = n / effort,
+      .by = "species"
+    ) %>%
+    slice_max(n, n = 50) %>%
+    mutate(species = reorder(species, n)) %>%
+    pull(species)
+})
+```
+
+# Bivariate
+## Categorical
+### Habitat class
+
+We look at the number of observations per habitat class.
+
+```{r}
+bind_rows(pollinator_obs_df) %>%
+  count(pollinatorGroup, habClass) %>%
+  ggplot(aes(x = habClass, y = n, fill = pollinatorGroup)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(y = "Number of observations", x = "") +
+  geom_text(aes(label = n), vjust = -0.25,
+            position = position_dodge(width = 0.9)) +
+  theme_minimal()
+```
+
+We look at the number of species per habitat class.
+
+```{r}
+bind_rows(pollinator_obs_df) %>%
+  group_by(pollinatorGroup, habClass) %>%
+  summarise(n_spec = n_distinct(species), .groups = "drop") %>%
+  ggplot(aes(x = habClass, y = n_spec, fill = pollinatorGroup)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = n_spec), vjust = -0.25,
+            position = position_dodge(width = 0.9)) +
+  labs(y = "Number of species", x = "") +
+  theme_minimal()
+```
+
+### Soil class
+
+
+
+## Continuous
+### Size of habitat parcels
+
+### Climatic variables

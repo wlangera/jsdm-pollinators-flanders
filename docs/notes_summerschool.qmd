@@ -1,0 +1,300 @@
+---
+title: "Notes summer school 'Model-based multivariate analysis for ecologists'"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+21st-25th of July 2025
+
+Hjerkinn, Norway
+
+<https://bertv.folk.ntnu.no/>
+
+<https://github.com/BertvanderVeen/SSMA>
+
+# Day 1
+
+|   Day   |Time         |Subject                                                         |Lecturer|
+|---------|-------------|:---------------------------------------------------------------|:-------|
+|Monday   |<sub>09:00 - 09:30</sub>| [Welcome, introduction, getting started](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/Introduction.pdf)              |Bert    |
+|         |<sub>09:30 - 10:15</sub>| [Lecture: Modeling data from ecological communities](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/CommunityData.pdf)           |        |
+|         |<sub>10:15 - 10:45</sub>| ☕ Break                                             |        |
+|         |<sub>10:45 - 11:15</sub>| Icebreaker/group discussion: properties of community data            |        | <!-- short group-based disucssion (getting to know each other), also what they expect to be an issue/should be addressed -->
+|         |<sub>11:15 - 12:00</sub>| [Lecture: Generalised Linear Models for multiple species](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/GLMs.pdf)      |        | <!-- distributions and such-->
+|         |<sub>12:30 - 13:30</sub>| 🍽 Lunch                                            |        |
+|         |<sub>13:30 - 14:30</sub>| Practical 2: Fitting GLMs                           |        | <!--add VGLM to this practical-->
+|         |<sub>14:30 - 15:15</sub>| [Lecture: Finding a good multispecies GLM](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/ModelComparison.pdf)                     |        |<!-- what it means to have multiple species -->
+|         |<sub>15:15 - 15:30</sub>| ☕ Break                                             |        |
+|         |<sub>15:30 - 16:30</sub>| Practical 3: Comparing multispecies GLMs            |        | <!-- model selection, hypo testing ?-->
+|         |<sub>16:30 - 17:15</sub>| [Lecture: Introduction to the gllvm R-package](https://github.com/BertvanderVeen/SSMA/blob/main/Monday/gllvm_intro.pdf)                 |Pekka/Bert   |
+|         |<sub>17:15 - 19:30</sub>| Free time + 🍽 Dinner                                        |        |
+|         |<sub>19:30 - 20:30</sub>| Recap of the day                                    |Bert    |
+
+## 09:00 - 09:30 Welcome, introduction, getting started
+
+- welcome
+- introductions of everyone
+- logistics and planning of the week
+- overview
+  - introduction
+  - motivation
+  - history
+  - contemporary multivariate analysis
+    - VGLM: vector models (multiple species)
+    - JSDM
+    - model based ordination
+  - conclusions
+
+## 09:30 - 10:15 Lecture: Modeling data from ecological communities
+
+
+- sampling data
+  - basic thinking about study design and data properties
+  - sampling variation
+    - where we look, when we look, how often we look, resources available, who looks ...
+    --> adjust our analysis
+  - preferential sampling 
+    - e.g. "I sample on an elevation gradient"
+      - predefined community, environment --> effects results
+    - consequences
+      - few observations (lots of zeroes)
+      - common versus rare species
+  - sample size
+    - trade-off work, time, money
+  - minimize impact of sampling process
+    - a priori --> sampling design
+  - detection bias
+  - classification error
+- data properties
+- models
+  - traditional models do not deal with data properties appropriately
+    - classic: "we adjust the model, not the data" --> data is fixed
+  - process thinking
+    1. sampling effect
+    2. ecological effect
+- uncertainty
+  - *skip theory*
+  - "we are not interested in the answer for this dataset, but for an answer for all datasets"
+- summary
+  - most data properties can be accommodated with models
+  - requires consideration
+  - choose the appropriate model, not the software you like
+    - "if you have a hammer, every problem is a nail"
+  - some properties are more difficult to accommodate
+  - many issues (sparsity, sample size ...) do not show in traditional methods
+  - models will be more honest to you
+
+## 10:45 - 11:15 Discussion: properties of community data
+
+- density data
+- proportion coverage
+- presence only
+  - sampling effort
+  - spatial bias
+  - observer bias
+
+## 11:15 - 12:00 Lecture: Generalised Linear Models for multiple species
+
+- Outline
+  - GLMs can deal with multiple data types
+- Species-environment
+  - GLMs align with ecological processes
+  - Ecological community: group of more species living together at the same time
+  - Ecological gradients
+- GLM background
+  - relax normality and homoscedasticity
+    - variance changes with the mean
+    - range of y is bounded
+  - parameters need to be estimated iteratively
+     - numerical optimization
+- Example 1: Swiss birds
+  - binomial model
+  - c-loglog link function: use when truncated counts (e.g. you know there are more than 1 but not how much)
+  - species respond different to slope, too simplistic
+  - different types of parametrisations
+- Example 2: macroinvertebrate counts in USA desert
+  - again no common effect
+- Vector GLMs
+  - Before, one GLM over all species
+  - in VGLM each species gets own dispersion parameter --> slightly more flexible
+  - software
+    - VGAM, glmmTMB, gllvm
+  - also MLE estimation --> same likelihood as GLM but now we have $\phi_j$ instead of $\phi$
+  - gllvm
+    - published in 2019
+    - fitted in C++
+  - downside is that we have now more parameters per species, need enough data per species
+  - assumes independence of species --> JSDMs tomorrow
+  - no random effects
+
+## 13:00 - 14:00 Practical 2: Fitting GLMs
+
+- see fork
+
+## 14:00 - 14:45 Lecture: Finding a good multispecies GLM
+
+- background
+- example 1
+- hypothesis testing
+- example 2
+- information criteria
+  - don't take the best model paradigm too seriously
+  - use common sense, do not blindly test all
+- example 3
+  - omitted variable bias
+  - which model
+    - simpler model
+    - report multiple models
+- residuals
+  - assumptions
+    - no outliers
+    - independent observations
+    - correct distribution
+    - correct link function
+    - correct variance function
+    - no systematic departure from the model
+  - multiple kinds of residuals
+    - complicated
+  - graphical diagnostic (see practical)
+    - residuals versus fitted
+    - QQ plot
+      - check whether it is the right distribution
+- summary
+
+## 15:30 - 16:30 Practical 3: Comparing multispecies GLMs
+
+- see fork
+
+## 16:30 - 17:15 Lecture: Introduction to the gllvm R-package
+
+- focus on ordination and species co-occurrence
+- fast estimation
+
+## 19:30 - 20:30 Recap of the day
+
+# Day 2
+
+|Tuesday  |<sub>09:00 - 09:45</sub>| [Lecture: Multispecies mixed effects models](https://github.com/BertvanderVeen/SSMA/blob/main/Tuesday/MGLMM.pdf)                   |Jenni   |
+|         |<sub>09:45 - 10:45</sub>| Practical 4: Fitting mixed-effects models           |        |
+|         |<sub>10:45 - 11:15</sub>| ☕ Break                                             |        |
+|         |<sub>11:15 - 12:00</sub>| [Lecture: Joint Species Distribution Models (JSDMs)](https://github.com/BertvanderVeen/SSMA/blob/main/Tuesday/JSDM.pdf)           |Pekka   |
+|         |<sub>12:00 - 13:00</sub>| 🍽 Lunch                                            |        |
+|         |<sub>13:00 - 14:00</sub>| Practical 5: Fitting JSDMs                          |        |
+|         |<sub>14:00 - 14:45</sub>| [Lecture: Accommodating spatial or temporal autocorrelation](https://github.com/BertvanderVeen/SSMA/blob/main/Tuesday/spatialGLLVM.pdf)   |        |
+|         |<sub>14:45 - 15:15</sub>| ☕ Break                                             |        |
+|         |<sub>15:15 - 16:15</sub>| Practical 6: Spatial or temporal JSDMs              |        |
+|         |<sub>16:15 - 17:00</sub>| [Lecture: Hierarchical environmental responses](https://github.com/BertvanderVeen/SSMA/blob/main/Tuesday/HierarchicalResponses.pdf)                |Bert    |
+|         |<sub>17:00 - 19:30</sub>| Free time + 🍽 Dinner                                        |        |
+|         |<sub>19:30 - 20:30</sub>| Practical 7: Traits and the phylogenetic model      |Bert    |
+
+## 09:00 - 09:45 Lecture: Multispecies mixed effects models
+
+- mixed models
+  - mixed effects model = fixed and random effects
+  - when do we need a mixed effects model
+    - hierarchical/nested sampling designs
+    - correlated measurements
+    - correlation between species
+- R packages
+  - gllvm
+  - random effects for species or observational units/clusters
+- Species specific random effects
+  - specific arguments and coding for species specific REs
+  - `formula` argument
+  - grouping variable should have at least 5 levels to estimate a variance
+- Example 1
+  - shrinkage happens because you specify the random effects are normally distributed, so large values are not very likely ("shrunk to zero")
+    - very large values are often just due to data deficiency so it is better that they are close to zero with large CI that overlaps with zero, than to have a very big effect
+    - **gllvm** specifies the random effects relative to the average of the community, so there is shrinkage towards the mean across species with argument `betaCom`
+    - "if we do not have enough information for any particular species to estimate its effect, it reverts to the average of the whole community"
+- Community level random effects
+  - `row.eff` argument
+  - add study design in argument for nested design
+- Example 2
+- Diversity
+  - link between alpha, beta, gamma diversity and statistics
+
+## 09:45 - 10:45 Practical 4: Fitting mixed-effects models
+
+- see fork
+- by default everything is species specific
+  - `row.eff` used for species common effects, not good practise to omit it `~1` but it is possible
+    - random effects are the same for all species
+    - e.g. pit fall trap effect is the same for all species --> in row effect
+  - `formula` --> species specific effects
+
+## 11:15 - 12:00 Lecture: Joint Species Distribution Models (JSDMs)
+
+- outline
+- background
+  - importance of correlation and independence in the data
+- JSDM
+  - developed 10 years ago to incorporate covariation of species for better predictions
+  - questions
+    - how does the environment structure the community?
+    - how do trait affect species responses to the environment?
+    - how do co-evolutionary stuff effect?
+    - do species co-occur after the environment has been considered?
+- example 1
+- GLLVM
+  - dimension reduction
+- prediction
+  - how many latent variables?
+    - trade-off accuracy versus computational speed
+- example 2
+
+## 13:00 - 14:00 Practical 5: Fitting JSDMs
+
+- see fork
+
+## 14:00 - 14:45 Lecture: Accommodating spatial or temporal autocorrelation
+
+- it's difficult
+- other types of correlations then species correlations
+  - changes in type (e.g. seasonal)
+  - geographical region
+  - nested aspect of study
+- GLLVM
+  - use of correlation matrix structure `corAR1` (temporal)
+  - use of kernel functions `corExp` (spatial)
+- function of latitude and longitude in fixed effect vs 
+  - works for interpolation, but not for extrapolation (then kernel is better)
+
+## 15:15 - 16:15 Practical 6: Spatial or temporal JSDMs
+
+- see fork
+
+## 16:15 - 17:00 Lecture: Hierarchical environmental responses
+
+-outline
+- the 4th corner
+  - why do species prefer certain environmental conditions?
+  - trait ~ any species specific covariate
+    - you often measure individuals, not species!
+- example 1
+- hierarchical responses
+  - limitation: it assumes that species environmental responses are fully determined by the traits
+  - solution: add random effect per species
+    - hierarchical model per species environment response
+    - if you do not do this, you get inflated type I errors
+    - issue: slower calculation
+- community phylogenetics
+  - related species might have similar traits/might have similar responses to the environment
+  - stochastic model for trait evolution
+    - Brownian motion
+- example 2
+  - gllvm: nearest tips -> find order
+- summary
+
+## 19:30 - 20:30 Practical 7: Traits and the phylogenetic model
+
+- see fork
+

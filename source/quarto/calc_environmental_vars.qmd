@@ -1,0 +1,361 @@
+---
+title: "Calculate environmental variables"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+# Goal
+
+Calculate and add environmental variables to observations.
+
+```{r}
+#| warning: false
+#| message: false
+# Packages
+library(tidyverse)
+library(sf)
+
+# Conflicts
+conflicted::conflicts_prefer(dplyr::filter)
+
+# Paths
+data_path <- here::here("data", "raw")
+interim_path <- here::here("data", "intermediate")
+out_path <- here::here("data", "processed")
+
+# Global variables
+proj_crs <- 31370
+```
+
+# Select heather habitat
+
+We load and select Natura 2000 heather habitats.
+
+```{r}
+# Load BWK layer
+bwk_flanders <- st_read(file.path(data_path, "BwkHab.shp"))
+
+# Heather starts with 4
+heather_hab <- bwk_flanders %>%
+  filter(grepl("^4", HAB1))
+```
+
+## Categorise habitats
+
+Which habitat types do we get?
+
+```{r}
+table(heather_hab$HAB1)
+```
+
+<!-- spell-check: ignore:start -->
+
+We see:
+
+- 4010: Northern Atlantic wet heaths with *Erica tetralix*
+- 4030: European dry heaths
+- 4010, 4030: mix of above
+- 4010,gh/4030,gh: gh = no habitat
+- 4010,rbbsm: rbbsm = *Myrica gale* bush
+- 4030,bos: in combination with forest
+
+We make the following classification
+
+- wet heaths
+  - HAB1 = 4010|4010,gh|4010,rbbsm
+  - IF PHAB1 >= 60
+- dry heaths
+  - HAB1 = 4030|4010,gh|4030,bos
+  - IF PHAB1 >= 60
+- mixed heaths
+  - HAB1 = 4010, 4030
+  - OR HAB1 = 4010|4030 and HAB2 = 4030|4010 with PHAB1 + PHAB2 >= 70 AND PHAB2 >= 20
+
+<!-- spell-check: ignore:end -->
+
+Other polygons contain not enough habitat and are removed.
+
+```{r}
+heather_hab_cat <- heather_hab %>%
+  mutate(
+    habClass = case_when(
+      grepl("4010,4030", HAB1) ~ "mixed heath",
+      (grepl("^4010", HAB1) & grepl("^4030", HAB2)) &
+        (PHAB1 + PHAB2 >= 70 & PHAB2 >= 20) ~ "mixed heath",
+      (grepl("^4030", HAB1) & grepl("^4010", HAB2)) &
+        (PHAB1 + PHAB2 >= 70 & PHAB2 >= 20) ~ "mixed heath",
+      grepl("^4010", HAB1) & PHAB1 >= 60 ~ "wet heath",
+      grepl("^4030", HAB1) & PHAB1 >= 60 ~ "dry heath",
+      TRUE ~ "invalid"
+    )
+  ) %>%
+  filter(habClass != "invalid")
+
+table(heather_hab_cat$habClass)
+```
+
+## Join polygons
+
+We join neighbouring polygons together if they belong to the same habitat class.
+We calculate surface area of each polygon.
+
+```{r}
+#| warning: false
+heather_hab_cat_merged <- heather_hab_cat %>%
+  group_by(habClass) %>%
+  summarise(geometry = st_union(geometry), .groups = "drop") %>%
+  st_cast("POLYGON") %>%
+  mutate(habID = row_number(),
+         habAreaM2 = units::drop_units(st_area(geometry))) %>%
+  select(habID, habClass, habAreaM2, everything()) %>%
+  st_transform(proj_crs)
+```
+
+```{r}
+mapview::mapview(heather_hab_cat_merged, zcol = "habClass",
+                 layer.name = "Habitat")
+```
+
+## Export layer
+
+We write the layer out.
+
+```{r}
+st_write(
+  heather_hab_cat_merged,
+  file.path(interim_path, "heather_flanders_cat.gpkg"),
+  append = FALSE
+)
+```
+
+# Filter observation data
+
+Load observation data of pollinator groups.
+
+```{r}
+poll_groups <- c("bees", "butterflies", "moths", "hoverflies")
+
+# Read the files and build a named list
+pollinator_obs_df <- lapply(
+  file.path(interim_path, paste0(poll_groups, "_interim_data.csv")),
+  read_csv,
+  show_col_types = FALSE
+)
+names(pollinator_obs_df) <- poll_groups
+
+# Create sf objects
+pollinator_obs_sf <- lapply(
+  pollinator_obs_df,
+  st_as_sf,
+  coords = c("verbatimLongitude", "verbatimLatitude"),
+  crs = proj_crs,
+  remove = FALSE
+)
+```
+
+We select observations within heather habitats.
+
+```{r}
+#| warning: false
+pollinator_obs_filtered <- lapply(
+  pollinator_obs_sf,
+  st_intersection,
+  y = heather_hab_cat_merged
+)
+```
+
+How many observations are retained?
+
+```{r}
+sapply(pollinator_obs_filtered, nrow)
+```
+
+# Environmental variables
+
+We have the following layers and variables:
+
+- `BwkHab.shp`: habitat mapping layer of Flanders
+  - heather habitat classes (see above)
+  - size of habitat parcels (see above)
+- `klimaatvl.shp`: climate layer with multiple variables
+  - ...
+- `WRB Soil Units 40k (reference soil group).lyr`
+  - soil types
+
+## Habitat layer
+
+See above.
+Brief overview here.
+
+### Habitat classes heather
+
+We look at the number of observations per habitat class.
+
+```{r}
+bind_rows(pollinator_obs_filtered) %>%
+  st_drop_geometry() %>%
+  ggplot(aes(x = habClass, fill = pollinatorGroup)) +
+  geom_bar() +
+  labs(y = "Number of observations", x = "") +
+  theme_minimal()
+```
+
+We look at the number of species per habitat class.
+
+```{r}
+bind_rows(pollinator_obs_filtered) %>%
+  st_drop_geometry() %>%
+  group_by(pollinatorGroup, habClass) %>%
+  summarise(n_spec = n_distinct(species), .groups = "drop") %>%
+  ggplot(aes(x = habClass, y = n_spec, fill = pollinatorGroup)) +
+  geom_bar(stat = "identity") +
+  labs(y = "Number of species", x = "") +
+  theme_minimal()
+```
+
+### Habitat parcel size
+
+We have a good mix of parcel surface area for each habitat class.
+
+```{r}
+heather_hab_cat_merged %>%
+  ggplot(aes(y = log(habAreaM2), x = habClass)) +
+  geom_boxplot() +
+  labs(x = "") +
+  theme_minimal()
+```
+
+## Climate layer
+
+```{r}
+# Load climate layer
+climate_flanders <- st_read(file.path(data_path, "klimaatvl.shp")) %>%
+  st_transform(crs = 31370)
+
+# Glimpse of data
+glimpse(climate_flanders)
+```
+
+We calculate get first two PC axes of all climate variables.
+
+```{r}
+pca <- prcomp(as.matrix(st_drop_geometry(climate_flanders[-1])), scale. = TRUE)
+plot(pca)
+```
+
+```{r}
+pca$rotation %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "climVar") %>%
+  select(climVar, PC1, PC2) %>%
+  ggplot(aes(x = PC1, y = PC2)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_text(aes(label = climVar), nudge_x = -0.05, nudge_y = 0.02)
+```
+
+We also select a subset of the variables as such.
+
+```{r}
+clim_vars <- c("MAXT1", "GEMMAXJ", "NEERSLAG1", "GEMNEERSLA", "ZON1",
+               "GEMZONJAAR", "ZVORSTDAGE")
+```
+
+We select `r clim_vars` variables.
+
+```{r}
+for (var in clim_vars) {
+  p <- climate_flanders %>%
+    ggplot(aes(fill = .data[[var]])) +
+    geom_sf() +
+    scale_fill_viridis_c()
+  print(p)
+}
+```
+
+We add the variables and first two PCs to the observation data.
+
+```{r}
+#| warning: false
+pollinator_obs_climvar <- lapply(
+  pollinator_obs_filtered,
+  st_intersection,
+  y = climate_flanders %>%
+    bind_cols(as.data.frame(pca$x)) %>%
+    select(all_of(c(clim_vars, "PC1", "PC2")))
+)
+```
+
+Visualisation:
+
+```{r}
+bind_rows(pollinator_obs_climvar) %>%
+  pivot_longer(
+    cols = all_of(c(clim_vars, "PC1", "PC2")),
+    names_to = "climVar",
+    values_to = "climVal"
+  ) %>%
+  ggplot(aes(y = climVal, x = pollinatorGroup)) +
+  geom_boxplot() +
+  labs(x = "") +
+  facet_wrap(~climVar, ncol = 3, scales = "free") +
+  theme_minimal()
+```
+
+## Soil layer
+
+
+
+# Sampling effort
+
+We calculate total number of observations per kilometre square (UTM 1 km grid) over all pollinator groups.
+
+```{r}
+sampling_effort <- bind_rows(pollinator_obs_df) %>%
+  count(utm1, name = "samplingEffort")
+
+pollinator_obs_final <- lapply(
+  pollinator_obs_climvar,
+  left_join,
+  sampling_effort,
+  by = "utm1"
+)
+```
+
+Visualisation:
+
+```{r}
+bind_rows(pollinator_obs_final) %>%
+  ggplot(aes(y = samplingEffort, x = pollinatorGroup)) +
+  geom_boxplot() +
+  labs(x = "") +
+  theme_minimal()
+```
+
+# Write out observation dataset
+
+```{r}
+for (i in seq_along(names(pollinator_obs_final))) {
+  # Create file path
+  file_name <- paste0(poll_groups[i], "_data.csv")
+  path_full <- file.path(out_path, file_name)
+
+  # Write out dataset as csv
+  write_csv(
+    st_drop_geometry(
+      pollinator_obs_final[[names(pollinator_obs_final)[i]]]
+    ),
+    path_full
+  )
+  print(paste("Dataset written to", path_full))
+}
+```
