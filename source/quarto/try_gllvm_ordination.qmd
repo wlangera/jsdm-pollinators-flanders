@@ -1,0 +1,92 @@
+---
+title: "Test gllvm ordination"
+author: "Ward Langeraert"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+editor_options: 
+  chunk_output_type: console
+---
+
+# Goal
+
+Test **gllvm** package on dataset.
+
+```{r}
+#| warning: false
+#| message: false
+# Packages
+library(tidyverse)
+library(gllvm)
+
+# Conflicts
+conflicted::conflicts_prefer(dplyr::filter)
+
+# Paths
+data_path <- here::here("data", "processed")
+cache_path <- here::here("source", "quarto", "cache", "gllvm_models")
+dir.create(cache_path, showWarnings = FALSE, recursive = TRUE)
+```
+
+# Load data
+
+Load observation data of pollinator groups.
+
+```{r}
+pollinator_data_wide <- read_csv(
+  file.path(data_path, "pollinator_data_wide.csv")
+)
+```
+
+# Data exploration
+
+We just pick some species.
+We have a huge amount of zeroes.
+
+```{r}
+pollinator_data_wide %>%
+  pivot_longer(cols = -habID, names_to = "species", values_to = "count") %>%
+  count(species, count) %>%
+  arrange(species, count) %>%
+  filter(species %in% c("Blinde bij", "Groot koolwitje", "Gentiaanblauwtje",
+                           "Hyena")) %>%
+  ggplot(aes(x = count, y = n)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~species, scales = "free") +
+  theme_minimal()
+```
+
+# Ordination
+
+```{r}
+if (file.exists(file.path(cache_path, "model1.Rds"))) {
+  model1 <- readRDS(file.path(cache_path, "model1.Rds"))
+} else {
+  model1 <- gllvm(y = pollinator_data_wide[, -1], num.lv = 2, family = "ZIP",
+                  sd.errors = FALSE)
+  saveRDS(model1, file.path(cache_path, "model1.Rds"))
+}
+```
+
+```{r}
+plot(model1, which = 2)
+```
+
+```{r}
+
+if (file.exists(file.path(cache_path, "model2.Rds"))) {
+  model2 <- readRDS(file.path(cache_path, "model2.Rds"))
+} else {
+  model2 <- gllvm(y = pollinator_data_wide[, -1], num.lv = 2, family = "ZINB",
+                  sd.errors = FALSE)
+  saveRDS(model2, file.path(cache_path, "model2.Rds"))
+}
+```
+
+```{r}
+plot(model2, which = 2)
+```
