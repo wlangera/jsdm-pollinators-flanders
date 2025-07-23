@@ -1,5 +1,5 @@
 ---
-title: "Test gllvm ordination"
+title: "Test gllvm package"
 author: "Ward Langeraert"
 date: today
 date-format: "D MMMM YYYY"
@@ -60,7 +60,10 @@ pollinator_data_wide %>%
   theme_minimal()
 ```
 
-# Ordination
+# Response distribution
+
+We work with counts and we have zero inflation.
+We fit a Poisson zero inflated model.
 
 ```{r}
 if (file.exists(file.path(cache_path, "model1.Rds"))) {
@@ -72,12 +75,15 @@ if (file.exists(file.path(cache_path, "model1.Rds"))) {
 }
 ```
 
+The QQ plot does not look good.
+
 ```{r}
 plot(model1, which = 2)
 ```
 
-```{r}
+The next logical step is to look at the zero inflated Negative Binomial distribution.
 
+```{r}
 if (file.exists(file.path(cache_path, "model2.Rds"))) {
   model2 <- readRDS(file.path(cache_path, "model2.Rds"))
 } else {
@@ -86,6 +92,8 @@ if (file.exists(file.path(cache_path, "model2.Rds"))) {
   saveRDS(model2, file.path(cache_path, "model2.Rds"))
 }
 ```
+
+This looks good.
 
 ```{r}
 plot(model2, which = 2)
