@@ -262,36 +262,28 @@ We have the following layers and variables:
   - ...
 - `WRB Soil Units 40k (reference soil group).lyr`
   - soil types
+  
+We calculate environmental variables per site at the centroid of the habitat polygon.
 
 ## Habitat layer
 
 See above.
 Brief overview here.
 
+```{r}
+site_centroids <- heather_hab_cat_merged %>%
+  filter(habID %in% pollinator_total_wide$habID) %>%
+  mutate(geometry = st_centroid(geometry))
+```
+
 ### Habitat classes heather
 
 We look at the number of observations per habitat class.
 
 ```{r}
-bind_rows(pollinator_obs_filtered) %>%
-  st_drop_geometry() %>%
-  ggplot(aes(x = habClass, fill = pollinatorGroup)) +
-  geom_bar() +
-  labs(y = "Number of observations", x = "") +
-  theme_minimal()
-```
-
-We look at the number of species per habitat class.
-
-```{r}
-bind_rows(pollinator_obs_filtered) %>%
-  st_drop_geometry() %>%
-  group_by(pollinatorGroup, habClass) %>%
-  summarise(n_spec = n_distinct(species), .groups = "drop") %>%
-  ggplot(aes(x = habClass, y = n_spec, fill = pollinatorGroup)) +
-  geom_bar(stat = "identity") +
-  labs(y = "Number of species", x = "") +
-  theme_minimal()
+site_centroids %>%
+  ggplot(aes(x = habClass)) +
+  geom_bar()
 ```
 
 ### Habitat parcel size
@@ -299,7 +291,7 @@ bind_rows(pollinator_obs_filtered) %>%
 We have a good mix of parcel surface area for each habitat class.
 
 ```{r}
-heather_hab_cat_merged %>%
+site_centroids %>%
   ggplot(aes(y = log(habAreaM2), x = habClass)) +
   geom_boxplot() +
   labs(x = "") +
@@ -357,12 +349,11 @@ for (var in clim_vars) {
 
 We add the variables and first two PCs to the observation data.
 
-```{r}
+```r
 #| warning: false
-pollinator_obs_climvar <- lapply(
-  pollinator_obs_filtered,
-  st_intersection,
-  y = climate_flanders %>%
+site_centroids <- st_intersection(
+  site_centroids,
+  climate_flanders %>%
     bind_cols(as.data.frame(pca$x)) %>%
     select(all_of(c(clim_vars, "PC1", "PC2")))
 )
@@ -370,14 +361,14 @@ pollinator_obs_climvar <- lapply(
 
 Visualisation:
 
-```{r}
-bind_rows(pollinator_obs_climvar) %>%
+```r
+site_centroids %>%
   pivot_longer(
     cols = all_of(c(clim_vars, "PC1", "PC2")),
     names_to = "climVar",
     values_to = "climVal"
   ) %>%
-  ggplot(aes(y = climVal, x = pollinatorGroup)) +
+  ggplot(aes(y = climVal, x = habClass)) +
   geom_boxplot() +
   labs(x = "") +
   facet_wrap(~climVar, ncol = 3, scales = "free") +
@@ -386,49 +377,41 @@ bind_rows(pollinator_obs_climvar) %>%
 
 ## Soil layer
 
-
+> to do
 
 # Sampling effort
 
-We calculate total number of observations per kilometre square (UTM 1 km grid) over all pollinator groups.
+We calculate total number of observations per habitat over all pollinator groups.
 
 ```{r}
-sampling_effort <- bind_rows(pollinator_obs_df) %>%
-  count(utm1, name = "samplingEffort")
+sampling_effort <- bind_rows(pollinator_obs_filtered) %>%
+  st_drop_geometry() %>%
+  count(habID, name = "samplingEffort")
 
-pollinator_obs_final <- lapply(
-  pollinator_obs_climvar,
-  left_join,
-  sampling_effort,
-  by = "utm1"
-)
+plot_data <- left_join(site_centroids, sampling_effort, by = join_by(habID))
 ```
 
-Visualisation:
+Visualisation of logarithm of sampling effort:
 
 ```{r}
-bind_rows(pollinator_obs_final) %>%
-  ggplot(aes(y = samplingEffort, x = pollinatorGroup)) +
+plot_data %>%
+  ggplot(aes(y = log(samplingEffort), x = habClass)) +
   geom_boxplot() +
   labs(x = "") +
   theme_minimal()
 ```
 
-# Write out observation dataset
+# Write out plot dataset
 
 ```{r}
-for (i in seq_along(names(pollinator_obs_final))) {
-  # Create file path
-  file_name <- paste0(poll_groups[i], "_data.csv")
-  path_full <- file.path(out_path, file_name)
-
-  # Write out dataset as csv
-  write_csv(
-    st_drop_geometry(
-      pollinator_obs_final[[names(pollinator_obs_final)[i]]]
-    ),
-    path_full
-  )
-  print(paste("Dataset written to", path_full))
-}
+write_csv(
+  plot_data %>%
+    arrange(habID) %>%
+    mutate(
+      x = st_coordinates(geometry)[1],
+      y = st_coordinates(geometry)[2]
+    ) %>%
+    st_drop_geometry(),
+  file.path(out_path, "plot_data_wide.csv")
+)
 ```

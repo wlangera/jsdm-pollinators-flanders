@@ -298,3 +298,93 @@ Hjerkinn, Norway
 
 - see fork
 
+# Day 3
+
+|Wednesday|<sub>09:00 - 09:45</sub>| [Lecture: Model-based ordination](https://github.com/BertvanderVeen/SSMA/blob/main/Wednesday/ModelbasedOrdination.pdf)                              |Bert    |
+|         |<sub>09:45 - 10:45</sub>| Practical 8: Model-based unconstrained              |        |
+|         |<sub>10:45 - 11:15</sub>| ☕ Break                                             |        |
+|         |<sub>11:15 - 12:00</sub>| [Lecture: Bringing covariates into the ordination](https://github.com/BertvanderVeen/SSMA/blob/main/Wednesday/OrdWithPred.pdf)             |        |
+|         |<sub>12:00 - 13:00</sub>| 🍽 Lunch                                            |        |
+|         |<sub>13:00 - 14:00</sub>| Practical 9: Ordination with covariates             |        |
+|         |<sub>14:00 - 14:45</sub>| [Lecture: Conditioning and nested designs](https://github.com/BertvanderVeen/SSMA/blob/main/Wednesday/Conditioning.pdf)                     |        |
+|         |<sub>14:45 - 15:15</sub>| ☕ Break                                             |        |
+|         |<sub>15:15 - 16:15</sub>| Practical 10: Partial ordination                    |        | <!-- bringing together 3 formula interfaces, and the ideas of partial, residual ordination, and accommodating nested designs -->
+|         |<sub>16:15 - 17:00</sub>| [Lecture: Unimodal responses](https://github.com/BertvanderVeen/SSMA/blob/main/Wednesday/Unimodal.pdf)                                  |        |
+|         |<sub>17:00 - 19:30</sub>| Free time + 🍽 Dinner                                        |        |
+|         |<sub>19:30 - 20:30</sub>| Practical 11: Unimodal responses                    |Bert    |
+
+## 09:00 - 09:45Lecture: Model-based ordination
+
+- outline
+- ordination
+  - why do species co-occur?
+  - ecological gradients
+  - ordination axis = latent variable
+    - an unobserved gradient
+    - ordination method is some kind of latent variable model
+  - already exist for long time
+    - loads of resources, artefacts and use cases are well known
+  - problem, no way of validating methods
+    - loads of opinions on when they are bad
+- model-based ordination
+  - Hui et al. ([2015](https://doi.org/10.1111/2041-210X.12236))
+  - ordination is useful when we have too sparse data to estimate species effects
+- plot
+  - biplot: closer = more similar (sites), co-occurrence (species)
+    - similar to correlation plot we saw in JSDM
+    - ordination plot summarises way better than huge correlation plot
+  - triplot: add environmental variables
+  - you can rotate afterwards **GPArotation** package
+    - distances do not change
+- example 1
+- tools
+  - can also do predictions now (not possible in classical ordination)
+- example 2
+  - you can even plot uncertainties of predictions
+
+## 09:45 - 10:45 Practical 8: Model-based unconstrained
+
+## 11:15 - 12:00 Lecture: Bringing covariates into the ordination
+
+- outline
+- constrained
+  - RDA, CCA
+  - filter variation based on covariates
+  - do notperform dimension reduction
+  - essentially vector GLM
+  
+- example 1
+- continued
+- concurrent
+- example 2
+- bouncing
+- example 3
+
+## 13:00 - 14:00 Practical 9: Ordination with covariates
+
+## 14:00 - 14:45 Lecture: Conditioning and nested designs
+
+- outline
+- nested designs
+  - e.g. plots within sites
+- example 1
+- conditioning
+- example 2
+- partial ordination
+- example 3
+
+## 15:15 - 16:15 Practical 10: Partial ordination
+
+## 16:15 - 17:00 Lecture: Unimodal responses
+
+- outline
+- unimodal model
+- ordination model
+- distortion
+- example 1
+- gradient
+- example 2
+- comparison
+
+## 19:30 - 20:30 Practical 11: Unimodal responses
+

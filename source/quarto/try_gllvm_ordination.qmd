@@ -34,33 +34,48 @@ dir.create(cache_path, showWarnings = FALSE, recursive = TRUE)
 
 # Load data
 
-Load observation data of pollinator groups.
+We only look at butterfly data to have not too many species.
+Load observation data.
 
 ```{r}
-pollinator_data_wide <- read_csv(
-  file.path(data_path, "pollinator_data_wide.csv")
+butterflies_data_wide <- read_csv(
+  file.path(data_path, "butterflies_data_wide.csv")
 )
+```
+
+Load plot data of with variables.
+
+```{r}
+plot_data_wide <- read_csv(
+  file.path(data_path, "plot_data_wide.csv")
+)
+
+# Select plots of observations
+plot_data_wide <- plot_data_wide %>%
+  filter(habID %in% butterflies_data_wide$habID) %>%
+  mutate(habClass = factor(habClass))
 ```
 
 # Data exploration
 
-We just pick some species.
+We just pick some species to look at the distribution of the counts.
 We have a huge amount of zeroes.
 
 ```{r}
-pollinator_data_wide %>%
+set.seed(123)
+butterflies_data_wide %>%
   pivot_longer(cols = -habID, names_to = "species", values_to = "count") %>%
   count(species, count) %>%
   arrange(species, count) %>%
-  filter(species %in% c("Blinde bij", "Groot koolwitje", "Gentiaanblauwtje",
-                           "Hyena")) %>%
+  filter(species %in% sample(names(butterflies_data_wide[-1]), 4)) %>%
   ggplot(aes(x = count, y = n)) +
   geom_bar(stat = "identity") +
   facet_wrap(~species, scales = "free") +
   theme_minimal()
 ```
 
-# Response distribution
+# Test model fit
+## Response distribution
 
 We work with counts and we have zero inflation.
 We fit a Poisson zero inflated model.
@@ -69,7 +84,7 @@ We fit a Poisson zero inflated model.
 if (file.exists(file.path(cache_path, "model1.Rds"))) {
   model1 <- readRDS(file.path(cache_path, "model1.Rds"))
 } else {
-  model1 <- gllvm(y = pollinator_data_wide[, -1], num.lv = 2, family = "ZIP",
+  model1 <- gllvm(y = butterflies_data_wide[, -1], num.lv = 2, family = "ZIP",
                   sd.errors = FALSE)
   saveRDS(model1, file.path(cache_path, "model1.Rds"))
 }
@@ -87,7 +102,7 @@ The next logical step is to look at the zero inflated Negative Binomial distribu
 if (file.exists(file.path(cache_path, "model2.Rds"))) {
   model2 <- readRDS(file.path(cache_path, "model2.Rds"))
 } else {
-  model2 <- gllvm(y = pollinator_data_wide[, -1], num.lv = 2, family = "ZINB",
+  model2 <- gllvm(y = butterflies_data_wide[, -1], num.lv = 2, family = "ZINB",
                   sd.errors = FALSE)
   saveRDS(model2, file.path(cache_path, "model2.Rds"))
 }
@@ -97,4 +112,163 @@ This looks good.
 
 ```{r}
 plot(model2, which = 2)
+```
+
+## Sampling effort
+
+We use plot size and total number of observations per plot to account for sampling effort.
+
+$$
+\begin{align}
+\text{log}(\text{E}(y)) \sim \beta_0 + \beta_{mixed} + \beta_{wet} + \text{log}(X_{area}) + \text{log}(X_{effort}) \\
+
+\Rightarrow \text{log} \left( \frac{\text{E}(y)}{X_{area} \times X_{effort}} \right) \sim \beta_0 + \beta_{mixed} + \beta_{wet}
+\end{align}
+$$
+
+```{r}
+plot_data_wide$offset_var <- log(
+  plot_data_wide$habAreaM2 * plot_data_wide$samplingEffort
+)
+```
+
+We use the `offset` argument of the `gllvm()` function.
+
+```{r}
+if (file.exists(file.path(cache_path, "model3.Rds"))) {
+  model3 <- readRDS(file.path(cache_path, "model3.Rds"))
+} else {
+  model3 <- gllvm(
+    y = butterflies_data_wide[, -1],
+    X = plot_data_wide,
+    formula = ~habClass,
+    offset = plot_data_wide$offset_var,
+    num.lv = 2,
+    family = "ZINB",
+    sd.errors = TRUE
+  )
+  saveRDS(model3, file.path(cache_path, "model3.Rds"))
+}
+```
+
+Model fit looks good.
+
+```{r}
+#| fig-height: 10
+par(mfrow = c(3, 2))
+plot(model3)
+par(mfrow = c(1, 1))
+```
+
+We visualise the results:
+
+```{r}
+coefplot(model3)
+par(mfrow = c(1, 1))
+```
+
+Looks like we have one species with big uncertainty.
+We use a random effects model.
+
+## Random effects model
+
+```{r}
+if (file.exists(file.path(cache_path, "model4.Rds"))) {
+  model4 <- readRDS(file.path(cache_path, "model4.Rds"))
+} else {
+  model4 <- gllvm(
+    y = butterflies_data_wide[, -1],
+    X = plot_data_wide,
+    formula = ~(habClass|1),
+    offset = plot_data_wide$offset_var,
+    num.lv = 2,
+    family = "ZINB",
+    sd.errors = TRUE
+  )
+  saveRDS(model4, file.path(cache_path, "model4.Rds"))
+}
+```
+
+Model fit looks good.
+
+```{r}
+#| fig-height: 10
+par(mfrow = c(3, 2))
+plot(model4)
+par(mfrow = c(1, 1))
+```
+
+We visualise the results:
+
+```{r}
+randomCoefplot(model4)
+par(mfrow = c(1, 1))
+```
+
+```{r}
+#| fig-height: 5
+estimates <- model4$params$Br[-1,] %>%
+  as_tibble(rownames = "param") %>%
+  pivot_longer(-param, names_to = "species", values_to = "estimate")
+
+ses_model4 <- getPredictErr(model4)$Br[-1,] %>%
+  as_tibble(rownames = "param") %>%
+  pivot_longer(-param, names_to = "species", values_to = "se")
+
+full_join(estimates, ses_model4, by = join_by(param, species)) %>%
+  mutate(order = mean(estimate), .by = "species") %>%
+  mutate(
+    lcl = estimate + qnorm(0.025) * se,
+    ucl = estimate + qnorm(0.975) * se,
+    significant = !(0 > lcl & 0 < ucl),
+    species = reorder(species, order)
+  ) %>%
+  ggplot(aes(x = estimate, y = species, colour = param, alpha =  significant)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "darkgrey") +
+  geom_point(position = position_dodge(width = 0.8)) +
+  geom_errorbar(aes(xmin = lcl, xmax = ucl),
+                position = position_dodge(width = 0.8)) +
+  labs(x = "compared to dry heather", y = "", colour = "Legend:") +
+  theme_minimal() +
+  guides(alpha = "none") +
+  scale_alpha_manual(values = c(0.2, 1)) +
+  theme(legend.position = "inside",
+        legend.position.inside = c(0.8, 0.15),
+        legend.background = element_rect(fill = "white"),
+        axis.text.y = element_text(size = 6))
+```
+
+# Ordination
+
+```{r}
+# Add colours
+my_colors <- c("red", "green", "yellow")
+col_vect <- my_colors[plot_data_wide$habClass]
+
+# Make plot
+ordiplot(model4, symbols = TRUE, biplot = TRUE,
+         s.colors = col_vect, s.cex = 0.5,pch = 16)
+legend(
+  "topright",
+  legend = levels(plot_data_wide$habClass),
+  col = my_colors,
+  pch = 16,
+  cex = 1
+)
+```
+
+# Traits
+
+```{r}
+trait_data_interim <- read_csv(
+  file.path(here::here("data", "intermediate"),
+            "trait_data_interim.csv")
+)
+```
+
+Are all species present in trait dataset?
+
+```{r}
+trait_data_interim %>%
+  filter(pollinatorGroup == "butterflies")
 ```
