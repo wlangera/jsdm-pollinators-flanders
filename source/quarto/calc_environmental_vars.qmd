@@ -106,6 +106,7 @@ table(heather_hab_cat$habClass)
 
 We join neighbouring polygons together if they belong to the same habitat class.
 We calculate surface area of each polygon.
+We only keep polygons larger than 10,000 $m^2$.
 
 ```{r}
 #| warning: false
@@ -115,6 +116,7 @@ heather_hab_cat_merged <- heather_hab_cat %>%
   st_cast("POLYGON") %>%
   mutate(habID = row_number(),
          habAreaM2 = units::drop_units(st_area(geometry))) %>%
+  filter(habAreaM2 > 10000) %>%
   select(habID, habClass, habAreaM2, everything()) %>%
   st_transform(proj_crs)
 ```
@@ -161,6 +163,8 @@ pollinator_obs_sf <- lapply(
 )
 ```
 
+## Habitat selection
+
 We select observations within heather habitats.
 
 ```{r}
@@ -176,6 +180,75 @@ How many observations are retained?
 
 ```{r}
 sapply(pollinator_obs_filtered, nrow)
+```
+
+Consider each observation as presence (do not use `individualCount`).
+Count presences per habitat polygon, all other are absences (pseudo-absences).
+We only keep species that occur in at least 10 locations.
+
+```{r}
+pollinator_obs_wide <- lapply(pollinator_obs_filtered, function(df) {
+  df %>%
+    st_drop_geometry() %>%
+    count(habID, vernacularName) %>%
+    # Select common species
+    mutate(n_loc = n_distinct(habID), .by = "vernacularName") %>%
+    filter(n_loc >= 10) %>%
+    select(-n_loc) %>%
+    # Wide format and pseudo-absences
+    pivot_wider(names_from = vernacularName, values_from = n, values_fill = 0) %>%
+    arrange(habID)
+})
+```
+
+How many observations are retained?
+Resp. number of sites and number of species.
+
+```{r}
+sapply(pollinator_obs_wide, dim)
+```
+
+Over all pollinator groups:
+
+```{r}
+pollinator_total_wide <- lapply(pollinator_obs_filtered, st_drop_geometry) %>%
+    bind_rows() %>%
+    count(habID, vernacularName) %>%
+    # Select common species
+    mutate(n_loc = n_distinct(habID), .by = "vernacularName") %>%
+    filter(n_loc >= 10) %>%
+    select(-n_loc) %>%
+    # Wide format and pseudo-absences
+    pivot_wider(names_from = vernacularName, values_from = n, values_fill = 0) %>%
+    arrange(habID)
+```
+
+In total we have `r nrow(pollinator_total_wide)` sites and `r ncol(pollinator_total_wide) - 1` species.
+
+## Write out observation dataset
+
+Per pollinator group:
+
+```{r}
+for (i in names(pollinator_obs_wide)) {
+  # Create file path
+  file_name <- paste0(i, "_data_wide.csv")
+  path_full <- file.path(out_path, file_name)
+
+  # Write out dataset as csv
+  write_csv(
+    pollinator_obs_wide[[i]],
+    path_full
+  )
+  print(paste("Dataset written to", path_full))
+}
+```
+
+Total:
+
+```{r}
+write_csv(pollinator_total_wide,
+          file.path(out_path, "pollinator_data_wide.csv"))
 ```
 
 # Environmental variables
