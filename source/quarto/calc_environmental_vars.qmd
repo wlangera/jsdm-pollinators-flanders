@@ -196,13 +196,14 @@ pollinator_obs_wide <- lapply(pollinator_obs_filtered, function(df) {
     filter(n_loc >= 10) %>%
     select(-n_loc) %>%
     # Wide format and pseudo-absences
-    pivot_wider(names_from = vernacularName, values_from = n, values_fill = 0) %>%
+    pivot_wider(names_from = vernacularName, values_from = n,
+                values_fill = 0) %>%
     arrange(habID)
 })
 ```
 
 How many observations are retained?
-Resp. number of sites and number of species.
+Respectively number of sites and number of species.
 
 ```{r}
 sapply(pollinator_obs_wide, dim)
@@ -212,15 +213,16 @@ Over all pollinator groups:
 
 ```{r}
 pollinator_total_wide <- lapply(pollinator_obs_filtered, st_drop_geometry) %>%
-    bind_rows() %>%
-    count(habID, vernacularName) %>%
-    # Select common species
-    mutate(n_loc = n_distinct(habID), .by = "vernacularName") %>%
-    filter(n_loc >= 10) %>%
-    select(-n_loc) %>%
-    # Wide format and pseudo-absences
-    pivot_wider(names_from = vernacularName, values_from = n, values_fill = 0) %>%
-    arrange(habID)
+  bind_rows() %>%
+  count(habID, vernacularName) %>%
+  # Select common species
+  mutate(n_loc = n_distinct(habID), .by = "vernacularName") %>%
+  filter(n_loc >= 10) %>%
+  select(-n_loc) %>%
+  # Wide format and pseudo-absences
+  pivot_wider(names_from = vernacularName, values_from = n,
+              values_fill = 0) %>%
+  arrange(habID)
 ```
 
 In total we have `r nrow(pollinator_total_wide)` sites and `r ncol(pollinator_total_wide) - 1` species.

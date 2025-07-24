@@ -122,6 +122,8 @@ plot(model2, which = 2)
 
 We use plot size and total number of observations per plot to account for sampling effort.
 
+<!-- spell-check: ignore:start -->
+
 Let $y_{ij}$ be the count of species $j$ at site or observation unit $i$.
 Assume:
 
@@ -147,6 +149,8 @@ where:
 * $\theta_j$ is the dispersion parameter for species $j$,
 * $X_{\text{area},i}$ and $X_{\text{effort},i}$ are offset terms (e.g. surveyed area and effort),
 * All $\beta$'s are species-specific coefficients.
+
+<!-- spell-check: ignore:end -->
 
 ```{r}
 plot_data_wide$offset_var <- log(
@@ -201,7 +205,7 @@ if (file.exists(file.path(cache_path, "model4.Rds"))) {
   model4 <- gllvm(
     y = butterflies_data_wide[, -1],
     X = plot_data_wide,
-    formula = ~(habClass|1),
+    formula = ~(habClass | 1),
     offset = plot_data_wide$offset_var,
     num.lv = 2,
     family = "ZINB",
@@ -229,11 +233,11 @@ par(mfrow = c(1, 1))
 
 ```{r}
 #| fig-height: 5
-estimates <- model4$params$Br[-1,] %>%
+estimates <- model4$params$Br[-1, ] %>%
   as_tibble(rownames = "param") %>%
   pivot_longer(-param, names_to = "species", values_to = "estimate")
 
-ses_model4 <- getPredictErr(model4)$Br[-1,] %>%
+ses_model4 <- getPredictErr(model4)$Br[-1, ] %>%
   as_tibble(rownames = "param") %>%
   pivot_longer(-param, names_to = "species", values_to = "se")
 
@@ -270,7 +274,7 @@ col_vect <- my_colors[plot_data_wide$habClass]
 
 # Make plot
 ordiplot(model4, symbols = TRUE, biplot = TRUE,
-         s.colors = col_vect, s.cex = 0.5,pch = 16)
+         s.colors = col_vect, s.cex = 0.5, pch = 16)
 legend(
   "topright",
   legend = levels(plot_data_wide$habClass),

@@ -350,7 +350,7 @@ Hjerkinn, Norway
 - constrained
   - RDA, CCA
   - filter variation based on covariates
-  - do notperform dimension reduction
+  - do not perform dimension reduction
   - essentially vector GLM
   
 - example 1
@@ -388,3 +388,30 @@ Hjerkinn, Norway
 
 ## 19:30 - 20:30 Practical 11: Unimodal responses
 
+# Day 4
+
+|Thursday |<sub>09:00 - 12:00</sub>| 🚶 Excursion                                        |        |
+|         |<sub>12:00 - 13:00</sub>| 🍽 Lunch                                            |        |
+|         |<sub>13:00 - 13:45</sub>| [Lecture: GLLVMs from A-Z](https://github.com/BertvanderVeen/SSMA/blob/main/Thursday/analysis_A-Z/full_analysis.pdf)                                     |Audun   |
+|         |<sub>13:45 - 17:00</sub>| 🎤 Participant presentations and beyond                        |        |
+|         |<sub>17:00 - 19:30</sub>| Free time + 🍽 Dinner                                        |        |
+|         |<sub>19:30 - 20:30</sub>| (Re)analysing article Part I                        |Bert/Audun|
+
+## 13:00 - 13:45 Lecture: GLLVMs from A-Z
+
+- intro
+- formulating the question
+  - very important, what is the goal of the analysis
+  - do you want prediction or explanation?
+    - prediction
+    - explanatory
+      - confirmatory
+      - exploratory
+- example 1
+- model setup
+- model checking
+- making inferences
+
+## 13:45 - 17:00 Participant presentations and beyond
+
+## 19:30 - 20:30 (Re)analysing article Part I
