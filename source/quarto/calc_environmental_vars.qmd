@@ -106,6 +106,7 @@ table(heather_hab_cat$habClass)
 
 We join neighbouring polygons together if they belong to the same habitat class.
 We calculate surface area of each polygon.
+We only keep polygons larger than 10,000 $m^2$.
 
 ```{r}
 #| warning: false
@@ -115,6 +116,7 @@ heather_hab_cat_merged <- heather_hab_cat %>%
   st_cast("POLYGON") %>%
   mutate(habID = row_number(),
          habAreaM2 = units::drop_units(st_area(geometry))) %>%
+  filter(habAreaM2 > 10000) %>%
   select(habID, habClass, habAreaM2, everything()) %>%
   st_transform(proj_crs)
 ```
@@ -161,6 +163,8 @@ pollinator_obs_sf <- lapply(
 )
 ```
 
+## Habitat selection
+
 We select observations within heather habitats.
 
 ```{r}
@@ -178,6 +182,77 @@ How many observations are retained?
 sapply(pollinator_obs_filtered, nrow)
 ```
 
+Consider each observation as presence (do not use `individualCount`).
+Count presences per habitat polygon, all other are absences (pseudo-absences).
+We only keep species that occur in at least 10 locations.
+
+```{r}
+pollinator_obs_wide <- lapply(pollinator_obs_filtered, function(df) {
+  df %>%
+    st_drop_geometry() %>%
+    count(habID, vernacularName) %>%
+    # Select common species
+    mutate(n_loc = n_distinct(habID), .by = "vernacularName") %>%
+    filter(n_loc >= 10) %>%
+    select(-n_loc) %>%
+    # Wide format and pseudo-absences
+    pivot_wider(names_from = vernacularName, values_from = n,
+                values_fill = 0) %>%
+    arrange(habID)
+})
+```
+
+How many observations are retained?
+Respectively number of sites and number of species.
+
+```{r}
+sapply(pollinator_obs_wide, dim)
+```
+
+Over all pollinator groups:
+
+```{r}
+pollinator_total_wide <- lapply(pollinator_obs_filtered, st_drop_geometry) %>%
+  bind_rows() %>%
+  count(habID, vernacularName) %>%
+  # Select common species
+  mutate(n_loc = n_distinct(habID), .by = "vernacularName") %>%
+  filter(n_loc >= 10) %>%
+  select(-n_loc) %>%
+  # Wide format and pseudo-absences
+  pivot_wider(names_from = vernacularName, values_from = n,
+              values_fill = 0) %>%
+  arrange(habID)
+```
+
+In total we have `r nrow(pollinator_total_wide)` sites and `r ncol(pollinator_total_wide) - 1` species.
+
+## Write out observation dataset
+
+Per pollinator group:
+
+```{r}
+for (i in names(pollinator_obs_wide)) {
+  # Create file path
+  file_name <- paste0(i, "_data_wide.csv")
+  path_full <- file.path(out_path, file_name)
+
+  # Write out dataset as csv
+  write_csv(
+    pollinator_obs_wide[[i]],
+    path_full
+  )
+  print(paste("Dataset written to", path_full))
+}
+```
+
+Total:
+
+```{r}
+write_csv(pollinator_total_wide,
+          file.path(out_path, "pollinator_data_wide.csv"))
+```
+
 # Environmental variables
 
 We have the following layers and variables:
@@ -189,36 +264,28 @@ We have the following layers and variables:
   - ...
 - `WRB Soil Units 40k (reference soil group).lyr`
   - soil types
+  
+We calculate environmental variables per site at the centroid of the habitat polygon.
 
 ## Habitat layer
 
 See above.
 Brief overview here.
 
+```{r}
+site_centroids <- heather_hab_cat_merged %>%
+  filter(habID %in% pollinator_total_wide$habID) %>%
+  mutate(geometry = st_centroid(geometry))
+```
+
 ### Habitat classes heather
 
 We look at the number of observations per habitat class.
 
 ```{r}
-bind_rows(pollinator_obs_filtered) %>%
-  st_drop_geometry() %>%
-  ggplot(aes(x = habClass, fill = pollinatorGroup)) +
-  geom_bar() +
-  labs(y = "Number of observations", x = "") +
-  theme_minimal()
-```
-
-We look at the number of species per habitat class.
-
-```{r}
-bind_rows(pollinator_obs_filtered) %>%
-  st_drop_geometry() %>%
-  group_by(pollinatorGroup, habClass) %>%
-  summarise(n_spec = n_distinct(species), .groups = "drop") %>%
-  ggplot(aes(x = habClass, y = n_spec, fill = pollinatorGroup)) +
-  geom_bar(stat = "identity") +
-  labs(y = "Number of species", x = "") +
-  theme_minimal()
+site_centroids %>%
+  ggplot(aes(x = habClass)) +
+  geom_bar()
 ```
 
 ### Habitat parcel size
@@ -226,7 +293,7 @@ bind_rows(pollinator_obs_filtered) %>%
 We have a good mix of parcel surface area for each habitat class.
 
 ```{r}
-heather_hab_cat_merged %>%
+site_centroids %>%
   ggplot(aes(y = log(habAreaM2), x = habClass)) +
   geom_boxplot() +
   labs(x = "") +
@@ -284,12 +351,11 @@ for (var in clim_vars) {
 
 We add the variables and first two PCs to the observation data.
 
-```{r}
+```r
 #| warning: false
-pollinator_obs_climvar <- lapply(
-  pollinator_obs_filtered,
-  st_intersection,
-  y = climate_flanders %>%
+site_centroids <- st_intersection(
+  site_centroids,
+  climate_flanders %>%
     bind_cols(as.data.frame(pca$x)) %>%
     select(all_of(c(clim_vars, "PC1", "PC2")))
 )
@@ -297,14 +363,14 @@ pollinator_obs_climvar <- lapply(
 
 Visualisation:
 
-```{r}
-bind_rows(pollinator_obs_climvar) %>%
+```r
+site_centroids %>%
   pivot_longer(
     cols = all_of(c(clim_vars, "PC1", "PC2")),
     names_to = "climVar",
     values_to = "climVal"
   ) %>%
-  ggplot(aes(y = climVal, x = pollinatorGroup)) +
+  ggplot(aes(y = climVal, x = habClass)) +
   geom_boxplot() +
   labs(x = "") +
   facet_wrap(~climVar, ncol = 3, scales = "free") +
@@ -313,49 +379,41 @@ bind_rows(pollinator_obs_climvar) %>%
 
 ## Soil layer
 
-
+> to do
 
 # Sampling effort
 
-We calculate total number of observations per kilometre square (UTM 1 km grid) over all pollinator groups.
+We calculate total number of observations per habitat over all pollinator groups.
 
 ```{r}
-sampling_effort <- bind_rows(pollinator_obs_df) %>%
-  count(utm1, name = "samplingEffort")
+sampling_effort <- bind_rows(pollinator_obs_filtered) %>%
+  st_drop_geometry() %>%
+  count(habID, name = "samplingEffort")
 
-pollinator_obs_final <- lapply(
-  pollinator_obs_climvar,
-  left_join,
-  sampling_effort,
-  by = "utm1"
-)
+plot_data <- left_join(site_centroids, sampling_effort, by = join_by(habID))
 ```
 
-Visualisation:
+Visualisation of logarithm of sampling effort:
 
 ```{r}
-bind_rows(pollinator_obs_final) %>%
-  ggplot(aes(y = samplingEffort, x = pollinatorGroup)) +
+plot_data %>%
+  ggplot(aes(y = log(samplingEffort), x = habClass)) +
   geom_boxplot() +
   labs(x = "") +
   theme_minimal()
 ```
 
-# Write out observation dataset
+# Write out plot dataset
 
 ```{r}
-for (i in seq_along(names(pollinator_obs_final))) {
-  # Create file path
-  file_name <- paste0(poll_groups[i], "_data.csv")
-  path_full <- file.path(out_path, file_name)
-
-  # Write out dataset as csv
-  write_csv(
-    st_drop_geometry(
-      pollinator_obs_final[[names(pollinator_obs_final)[i]]]
-    ),
-    path_full
-  )
-  print(paste("Dataset written to", path_full))
-}
+write_csv(
+  plot_data %>%
+    arrange(habID) %>%
+    mutate(
+      x = st_coordinates(geometry)[1],
+      y = st_coordinates(geometry)[2]
+    ) %>%
+    st_drop_geometry(),
+  file.path(out_path, "plot_data_wide.csv")
+)
 ```

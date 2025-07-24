@@ -76,6 +76,7 @@ trait_data <- trait_data_full[, -1] %>%
     # Taxonomic information
     gbifID = GBIF.ID,
     species, pollinatorGroup, genus, family, order, class, phylum, class,
+    vernacularName,
     redListCategory = Rodelijst,
     verbatimRedListCategory = RodeLijstCategorie,
     # Traits
