@@ -43,6 +43,10 @@ butterflies_data_wide <- read_csv(
 )
 ```
 
+```{r}
+dim(butterflies_data_wide)
+```
+
 Load plot data of with variables.
 
 ```{r}
@@ -118,13 +122,31 @@ plot(model2, which = 2)
 
 We use plot size and total number of observations per plot to account for sampling effort.
 
-$$
-\begin{align}
-\text{log}(\text{E}(y)) \sim \beta_0 + \beta_{mixed} + \beta_{wet} + \text{log}(X_{area}) + \text{log}(X_{effort}) \\
+Let $y_{ij}$ be the count of species $j$ at site or observation unit $i$.
+Assume:
 
-\Rightarrow \text{log} \left( \frac{\text{E}(y)}{X_{area} \times X_{effort}} \right) \sim \beta_0 + \beta_{mixed} + \beta_{wet}
-\end{align}
 $$
+y_{ij} \sim \text{NegBin}(\mu_{ij}, \theta_{j})
+$$
+
+with
+
+$$
+\log(\mu_{ij}) = \log(\text{E}(y_{ij})) = \beta_{0j} + \beta_{\text{mixed},j} + \beta_{\text{wet},j} + \log(X_{\text{area},i}) + \log(X_{\text{effort},i})
+$$
+
+or equivalently, by offsetting:
+
+$$
+\log\left( \frac{\text{E}(y_{ij})}{X_{\text{area},i} \cdot X_{\text{effort},i}} \right) = \beta_{0j} + \beta_{\text{mixed},j} + \beta_{\text{wet},j}
+$$
+
+where:
+
+* $\mu_{ij} = \mathbb{E}(y_{ij})$ is the expected count,
+* $\theta_j$ is the dispersion parameter for species $j$,
+* $X_{\text{area},i}$ and $X_{\text{effort},i}$ are offset terms (e.g. surveyed area and effort),
+* All $\beta$'s are species-specific coefficients.
 
 ```{r}
 plot_data_wide$offset_var <- log(
@@ -241,6 +263,7 @@ full_join(estimates, ses_model4, by = join_by(param, species)) %>%
 # Ordination
 
 ```{r}
+#| fig-height: 6
 # Add colours
 my_colors <- c("red", "green", "yellow")
 col_vect <- my_colors[plot_data_wide$habClass]
