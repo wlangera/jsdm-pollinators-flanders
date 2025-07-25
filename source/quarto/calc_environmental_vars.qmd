@@ -410,8 +410,8 @@ write_csv(
   plot_data %>%
     arrange(habID) %>%
     mutate(
-      x = st_coordinates(geometry)[1],
-      y = st_coordinates(geometry)[2]
+      x = st_coordinates(geometry)[, 1],
+      y = st_coordinates(geometry)[, 2]
     ) %>%
     st_drop_geometry(),
   file.path(out_path, "plot_data_wide.csv")
