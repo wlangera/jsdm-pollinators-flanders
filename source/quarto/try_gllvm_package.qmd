@@ -284,6 +284,10 @@ legend(
 )
 ```
 
+# Account for spatial correlation
+
+
+
 # Traits
 
 ```{r}
