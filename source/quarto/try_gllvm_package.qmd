@@ -34,6 +34,7 @@ dir.create(cache_path, showWarnings = FALSE, recursive = TRUE)
 
 # Source
 source(file.path(source_path, "plot_random_effects.R"))
+source(file.path(source_path, "plot_variance_partitioning.R"))
 ```
 
 # Load data
@@ -241,6 +242,12 @@ par(mfrow = c(1, 1))
 plot_random_effects(model4)
 ```
 
+We look at variance partitioning.
+
+```{r}
+plot_variance_partitioning(model4)
+```
+
 # Ordination
 
 ```{r}
@@ -313,29 +320,10 @@ How do the effects look like?
 plot_random_effects(model5)
 ```
 
+We look at variance partitioning.
+
 ```{r}
-var_part5 <- varPartitioning(model5)
-var_part5$PropExplainedVarSp %>%
-  as_tibble(rownames = "species") %>%
-  pivot_longer(-species, names_to = "part", values_to = "percentage") %>%
-  mutate(
-    Legend = factor(
-      paste0(
-        gsub("/", "\n", part),
-        "\n-->mean: ",
-        round(colMeans(var_part5$PropExplainedVarSp), 3)
-      ),
-    )
-  ) %>%
-  ggplot(aes(x = species, y = percentage, fill = Legend)) +
-  geom_bar(stat = "identity") +
-  labs(x = "", y = "Variance proportion") +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    legend.text = element_text(size = 8),
-    axis.text.x = element_text(size = 7, angle = 90, hjust = 0.95, vjust = 0.2)
-  )
+plot_variance_partitioning(model5)
 ```
 
 # Traits
