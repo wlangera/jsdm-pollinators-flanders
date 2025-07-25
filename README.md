@@ -51,6 +51,12 @@ Clean up trait dataset and create workflow to create taxonomical tree.
 
 Filter observation data based on habitat layer and add environmental variables.
 
+<!-- spell-check: ignore:start -->
+#### Step 4: try_gllvm_package.qmd
+<!-- spell-check: ignore:end -->
+
+Test **gllvm** package.
+
 ### Repo structure
 
 ```
