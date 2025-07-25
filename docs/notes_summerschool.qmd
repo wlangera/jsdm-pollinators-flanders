@@ -434,11 +434,71 @@ Hjerkinn, Norway
 
 ## 09:05 - 09:45 Lecture: Concepts in model-based clustering
 
-
+- intro
+  - model based clustering is in early stage
+- clustering sites and or species (unconstrained clustering)
+  - correlations are complex for multivariate abundance datasets
+    - cluster sites (rows) or species (columns) with similar pattern across respectively species and sites
+    - you can cluster by row and column at the same time (biclustering)
+  - cluster or ordination depends on research question (see slide, pink is cluster)
+  - pattern detection
+    - you can do unconstrained ordination and clustering at the same time
+      - low dimensional representation and find clusters
+    - massive assumption now: species are independent of each other (might be relaxed in software later)
+    - big question: how many clusters do you want?
+    - decision on row or column clustering can be done with AIC and BIC, but better to do depending on your research questions
+- clustering with covariates (constrained clustering)
+  - cluster species with similar responses to the environment
+    - you want to cluster based on the shape of the environmental response
+  - use environment to cluster species: bioregionalization
+    - you can choose number of clusters and fit multiple models, afterwards look at AIC and BIC 
+      - also other methods to choose number of clusters
+      - sites further away can belong to same bioregion, but you can also include spatial correlation if you want
+    - you get probability of species belonging to same guild or bioregion
+- outgoing remarks
+  - model-based clustering is much less developed than model-based ordination
 
 ## 09:45 - 10:30 Lecture: Other packages for multivariate analysis
 
-
+- boral
+  - bayesian ordination and regression analysis
+  - similar to gllvm
+    - use
+  - different to gllvm
+    - bayesian
+    - slower
+    - stochastic variable selection (SVS)
+  - no reason to use boral, except for SVS or if you like Bayesian approach
+- HMSC
+  - nothing that GLLVM cannot do
+  - slow
+  - not much response types
+  - HMSC focuses on prediction, gllvm as well but has different focus
+- ecoCopula
+  - really really fast
+  - can estimate direct associations (slightly different from residual correlations)
+- VGAM
+  - oldest
+  - far beyond ordinations
+  - no random effects
+- glmmTMB
+  - very useful
+  - not coded for ordination
+  - long format
+- gmf
+  - if you have large amounts of data, can be useful
+    - because of penalized likelihood
+- RCM
+  - Belgian development
+  - functionality is limited
+- CBFM
+  - new
+  - targeted on spatio, temoral or spatio-temporal analysis
+    - nice place to go
+- summary table see slides
+  - gllvm very good compared to others
+  - other packages sometimes some advantages like speed, Bayesian etc.
+  - think about data, ecological process, research question --> software choice
 
 ## 10:30 - 11:30 Practical 12: Comparing ordinations
 
@@ -451,3 +511,11 @@ Hjerkinn, Norway
 ## 14:00 - 16:00 Analysis of own data
 
 
+
+# Tasks
+
+- summer school feedback
+- GitHub issue or discussion on presence only analysis
+- look into ordination part again
+- set meeting with INBO colleagues
+- summarise summer school for colleagues
