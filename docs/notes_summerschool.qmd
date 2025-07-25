@@ -414,4 +414,40 @@ Hjerkinn, Norway
 
 ## 13:45 - 17:00 Participant presentations and beyond
 
+- my analysis is more like a point process model
+  - cannot be done in **gllvm** but might be done by weighting the likelihood by polygon size
+    - make issue
+    - see literature
+      - Francis Hui: "there is a lot of literature outside of selecting pseudo-absences e.g., https://esajournals.onlinelibrary.wiley.com/doi/10.1002/ecm.1486 and https://pbs-assess.github.io/sdmTMB-teaching/noaa-psaw-2022/06-presence-only.html#1, with the latter if you want to get into spatial models. But there is way more out there with point-process stuff [J]SDMs. As  mentioned it requires some weighting to get things right", but otherwise I am very impressed and this could seriously be made a gllvm vignette or even a short applied paper"
+      - "https://pbs-assess.github.io/sdmTMB/articles/presence-only.html is easier to read...at least using the sdmTMB package"
+
 ## 19:30 - 20:30 (Re)analysing article Part I
+
+# Day 5
+
+|Friday   |<sub>09:05 - 09:45</sub>| [Lecture: Concepts in model-based clustering](https://github.com/BertvanderVeen/SSMA/blob/main/Friday/modelbasedclustering.pdf)                  |Francis |
+|         |<sub>09:45 - 10:30</sub>| [Lecture: Other packages for multivariate analysis](https://github.com/BertvanderVeen/SSMA/blob/main/Friday/otherPackages.pdf) |Bert  |
+|         |<sub>10:30 - 11:30</sub>| Practical 12: Comparing ordinations                 |        |
+|         |<sub>11:30 - 12:30</sub>| 🍽 Early lunch                                      |        |
+|         |<sub>12:30 - 14:00</sub>| (Re)analysing article Part II / Discussion          |        |
+|         |<sub>14:00 - 16:00</sub>| Analysis of own data                                |        |
+
+## 09:05 - 09:45 Lecture: Concepts in model-based clustering
+
+
+
+## 09:45 - 10:30 Lecture: Other packages for multivariate analysis
+
+
+
+## 10:30 - 11:30 Practical 12: Comparing ordinations
+
+
+
+## 12:30 - 14:00 (Re)analysing article Part II / Discussion
+
+
+
+## 14:00 - 16:00 Analysis of own data
+
+
