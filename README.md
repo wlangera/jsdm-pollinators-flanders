@@ -27,6 +27,8 @@ Explore Joint Species Distribution Modelling of a pollinator community in Flande
 
 This repo is made in preparation of the summer school 'Model-based multivariate analysis for ecologists' from 21st-25th of July 2025 in Hjerkinn, Norway ([link](https://bertv.folk.ntnu.no/)).
 
+Personal notes can be found in the `docs` folder.
+
 ### Order of execution
 
 Follow the steps below to run the scripts in a logical order.
@@ -69,8 +71,7 @@ Test **gllvm** package.
 │   ├── intermediate                ├ intermediate datasets
 │   └── processed                   ├ finalised datasets
 │
-├── output                          ├ folder to store outputs
-├── media                           ├ folder to store media
+├── docs                            ├ notes
 │
 ├── checklist.yml                   ├ options checklist package (https://github.com/inbo/checklist)
 ├── inst
