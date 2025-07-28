@@ -493,7 +493,7 @@ Hjerkinn, Norway
   - functionality is limited
 - CBFM
   - new
-  - targeted on spatio, temoral or spatio-temporal analysis
+  - targeted on spatio, temporal or spatio-temporal analysis
     - nice place to go
 - summary table see slides
   - gllvm very good compared to others
