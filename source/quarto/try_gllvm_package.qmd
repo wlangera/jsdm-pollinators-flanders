@@ -27,9 +27,14 @@ library(gllvm)
 conflicted::conflicts_prefer(dplyr::filter)
 
 # Paths
+source_path <- here::here("source", "scripts")
 data_path <- here::here("data", "processed")
 cache_path <- here::here("source", "quarto", "cache", "gllvm_models")
 dir.create(cache_path, showWarnings = FALSE, recursive = TRUE)
+
+# Source
+source(file.path(source_path, "plot_random_effects.R"))
+source(file.path(source_path, "plot_variance_partitioning.R"))
 ```
 
 # Load data
@@ -57,7 +62,8 @@ plot_data_wide <- read_csv(
 # Select plots of observations
 plot_data_wide <- plot_data_wide %>%
   filter(habID %in% butterflies_data_wide$habID) %>%
-  mutate(habClass = factor(habClass))
+  mutate(habClass = factor(habClass),
+         habID = factor(habID))
 ```
 
 # Data exploration
@@ -207,6 +213,7 @@ if (file.exists(file.path(cache_path, "model4.Rds"))) {
     X = plot_data_wide,
     formula = ~(habClass | 1),
     offset = plot_data_wide$offset_var,
+    beta0com = TRUE, # collects fixed intercepts to single intercept
     num.lv = 2,
     family = "ZINB",
     sd.errors = TRUE
@@ -233,36 +240,19 @@ par(mfrow = c(1, 1))
 
 ```{r}
 #| fig-height: 5
-estimates <- model4$params$Br[-1, ] %>%
-  as_tibble(rownames = "param") %>%
-  pivot_longer(-param, names_to = "species", values_to = "estimate")
-
-ses_model4 <- getPredictErr(model4)$Br[-1, ] %>%
-  as_tibble(rownames = "param") %>%
-  pivot_longer(-param, names_to = "species", values_to = "se")
-
-full_join(estimates, ses_model4, by = join_by(param, species)) %>%
-  mutate(order = mean(estimate), .by = "species") %>%
-  mutate(
-    lcl = estimate + qnorm(0.025) * se,
-    ucl = estimate + qnorm(0.975) * se,
-    significant = !(0 > lcl & 0 < ucl),
-    species = reorder(species, order)
-  ) %>%
-  ggplot(aes(x = estimate, y = species, colour = param, alpha =  significant)) +
-  geom_vline(xintercept = 0, linetype = "dashed", colour = "darkgrey") +
-  geom_point(position = position_dodge(width = 0.8)) +
-  geom_errorbar(aes(xmin = lcl, xmax = ucl),
-                position = position_dodge(width = 0.8)) +
-  labs(x = "compared to dry heather", y = "", colour = "Legend:") +
-  theme_minimal() +
-  guides(alpha = "none") +
-  scale_alpha_manual(values = c(0.2, 1)) +
-  theme(legend.position = "inside",
-        legend.position.inside = c(0.8, 0.15),
-        legend.background = element_rect(fill = "white"),
-        axis.text.y = element_text(size = 6))
+plot_random_effects(model4)
 ```
+
+We look at variance partitioning.
+
+```{r}
+plot_variance_partitioning(model4)
+```
+
+This is probably due to the pseudo absences.
+The latent variables do not explain anything.
+The pseudo absences were created per polygon and therefore we expect more pseudo absences in smaller polygons than in larger polygons.
+This is a problem.
 
 # Ordination
 
@@ -284,6 +274,82 @@ legend(
 )
 ```
 
+# Account for spatial correlation
+
+```{r}
+if (file.exists(file.path(cache_path, "model5.Rds"))) {
+  model5 <- readRDS(file.path(cache_path, "model5.Rds"))
+} else {
+  model5 <- gllvm(
+    y = butterflies_data_wide[, -1],
+    X = plot_data_wide,
+    formula = ~(habClass | 1),
+    beta0com = TRUE,
+    studyDesign = as.data.frame(plot_data_wide[, "habID"]),
+    row.eff = ~corExp(1 | habID),
+    dist = as.matrix(plot_data_wide[, c("x", "y")]),
+    offset = plot_data_wide$offset_var,
+    num.lv = 2,
+    family = "ZINB",
+    sd.errors = TRUE,
+    starting.val = "zero" # not necessary anymore with development version
+  )
+  saveRDS(model5, file.path(cache_path, "model5.Rds"))
+}
+```
+
+Model fit looks good.
+
+```{r}
+#| fig-height: 10
+par(mfrow = c(3, 2))
+plot(model5)
+par(mfrow = c(1, 1))
+```
+
+Our new model seems to be better.
+A spatial model is always better.
+
+```{r}
+tibble(
+  model = c("model4", "model5"),
+  AIC = c(AIC(model4), AIC(model5)),
+  AICc = c(AICc(model4), AICc(model5)),
+  BIC = c(BIC(model4), BIC(model5))
+) %>%
+  arrange(AIC, AICc, BIC) %>%
+  knitr::kable()
+```
+
+```{r}
+rho1 <- model5$params$sigma[1]
+```
+
+However the spatial scale parameter is `r rho1`.
+There is something weird going on.
+
+```{r}
+fun1 <- function(d) exp(-d / rho1)
+curve(fun1, from = 0, to = rho1 * 5, xlab = "distance", ylab = "exp(-d/rho)",
+      ylim = c(0, 1), main = "Spatial correlation")
+abline(v = rho1, lty = 2)
+```
+
+This may be due to bad starting value. Change `rangeP` parameter. This can also be due to the fact that some polygons are next to each other and others are very far away.
+
+How do the effects look like?
+
+```{r}
+#| fig-height: 5
+plot_random_effects(model5)
+```
+
+We look at variance partitioning.
+
+```{r}
+plot_variance_partitioning(model5)
+```
+
 # Traits
 
 ```{r}
@@ -296,6 +362,11 @@ trait_data_interim <- read_csv(
 Are all species present in trait dataset?
 
 ```{r}
-trait_data_interim %>%
-  filter(pollinatorGroup == "butterflies")
+trait_species <- trait_data_interim %>%
+  filter(pollinatorGroup == "butterflies") %>%
+  pull(vernacularName)
+
+setdiff(names(butterflies_data_wide[, -1]), trait_species)
 ```
+
+No. We do not have trait data for `r length(setdiff(names(butterflies_data_wide[, -1]), trait_species))`.
