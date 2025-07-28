@@ -211,7 +211,7 @@ if (file.exists(file.path(cache_path, "model4.Rds"))) {
   model4 <- gllvm(
     y = butterflies_data_wide[, -1],
     X = plot_data_wide,
-    formula = ~(habClass | 1), # ~( 0 + habClass | 1) # if you want intercept for each class
+    formula = ~(habClass | 1),
     offset = plot_data_wide$offset_var,
     beta0com = TRUE, # collects fixed intercepts to single intercept
     num.lv = 2,
@@ -284,6 +284,7 @@ if (file.exists(file.path(cache_path, "model5.Rds"))) {
     y = butterflies_data_wide[, -1],
     X = plot_data_wide,
     formula = ~(habClass | 1),
+    beta0com = TRUE,
     studyDesign = as.data.frame(plot_data_wide[, "habID"]),
     row.eff = ~corExp(1 | habID),
     dist = as.matrix(plot_data_wide[, c("x", "y")]),
@@ -333,6 +334,8 @@ curve(fun1, from = 0, to = rho1 * 5, xlab = "distance", ylab = "exp(-d/rho)",
       ylim = c(0,1), main = "Spatial correlation")
 abline(v = rho1, lty = 2)
 ```
+
+This may be due to bad starting value. Change `rangeP` parameter. This can also be due to the fact that some polygons are next to each other and others are very far away.
 
 How do the effects look like?
 
