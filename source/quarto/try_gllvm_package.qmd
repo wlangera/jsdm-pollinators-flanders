@@ -329,9 +329,9 @@ However the spatial scale parameter is `r rho1`.
 There is something weird going on.
 
 ```{r}
-fun1 <- function(d) exp(-d/rho1)
+fun1 <- function(d) exp(-d / rho1)
 curve(fun1, from = 0, to = rho1 * 5, xlab = "distance", ylab = "exp(-d/rho)",
-      ylim = c(0,1), main = "Spatial correlation")
+      ylim = c(0, 1), main = "Spatial correlation")
 abline(v = rho1, lty = 2)
 ```
 
