@@ -3,10 +3,12 @@ plot_variance_partitioning <- function(gllvm_model) {
   require("dplyr")
   require("rlang")
 
-  var_part <- varPartitioning(gllvm_model)
+  var_part <- gllvm::varPartitioning(gllvm_model)
   var_part$PropExplainedVarSp %>%
     as_tibble(rownames = "species") %>%
-    pivot_longer(-"species", names_to = "part", values_to = "percentage") %>%
+    tidyr::pivot_longer(
+      -"species", names_to = "part", values_to = "percentage"
+    ) %>%
     mutate(
       Legend = factor(
         paste0(

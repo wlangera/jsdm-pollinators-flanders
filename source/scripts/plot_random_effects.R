@@ -5,11 +5,11 @@ plot_random_effects <- function(gllvm_model) {
 
   estimates <- gllvm_model$params$Br[-1, ] %>%
     as_tibble(rownames = "param") %>%
-    pivot_longer(-"param", names_to = "species", values_to = "estimate")
+    tidyr::pivot_longer(-"param", names_to = "species", values_to = "estimate")
 
   ses_gllvm_model <- gllvm::getPredictErr(gllvm_model)$Br[-1, ] %>%
     as_tibble(rownames = "param") %>%
-    pivot_longer(-"param", names_to = "species", values_to = "se")
+    tidyr::pivot_longer(-"param", names_to = "species", values_to = "se")
 
   full_join(estimates, ses_gllvm_model,
             by = join_by("param", "species")) %>%
