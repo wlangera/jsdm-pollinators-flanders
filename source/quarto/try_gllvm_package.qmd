@@ -412,6 +412,8 @@ fourth_corner_specs <- butterflies_data_wide %>%
 
 We try a fourth-corner model with a reduced dataset. We remove species that have less than 4 observations per habitat type and species for which we do not have trait data: `r fourth_corner_specs`.
 
+> If you include species that are absent in certain habitat types. The parameter estimates of the fixed effects will blow up. This was not a problem when we were interested in the random effects. But will be now since we are interested in the interactoin terms of environmental and trait variables.
+
 ```{r}
 y_data_traits <- butterflies_data_wide[, c("habID", fourth_corner_specs)]
 
