@@ -412,7 +412,7 @@ fourth_corner_specs <- butterflies_data_wide %>%
 
 We try a fourth-corner model with a reduced dataset. We remove species that have less than 4 observations per habitat type and species for which we do not have trait data: `r fourth_corner_specs`.
 
-> If you include species that are absent in certain habitat types. The parameter estimates of the fixed effects will blow up. This was not a problem when we were interested in the random effects. But will be now since we are interested in the interactoin terms of environmental and trait variables.
+> If you include species that are absent in certain habitat types. The parameter estimates of the fixed effects will blow up. This was not a problem when we were interested in the random effects. But will be now since we are interested in the interaction terms of environmental and trait variables.
 
 ```{r}
 y_data_traits <- butterflies_data_wide[, c("habID", fourth_corner_specs)]
@@ -468,7 +468,7 @@ We visualise the results:
 plot_trait_parameters(model_trait1)
 ```
 
-The previous assumes of species’ responses are fully due to traits. If the chosen traits are not important to determining species’ environmental responses, it will result in lack-of-fit. So, in this next model we relax that assumption by also including species-specific random effects. We do need to run the model a few times, as it includes a lot of effects and does not always converge well.
+The previous assumes that species’ responses are fully due to traits. If the chosen traits are not important to determining species’ environmental responses, it will result in lack-of-fit. So, in this next model we relax that assumption by also including species-specific random effects. We do need to run the model a few times, as it includes a lot of effects and does not always converge well.
 
 ```{r}
 if (file.exists(file.path(cache_path, "model_trait2.Rds"))) {
