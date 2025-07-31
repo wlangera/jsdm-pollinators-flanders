@@ -504,6 +504,12 @@ par(mfrow = c(1, 1))
 plot_random_effects(model_trait2)
 ```
 
+- In dry heath
+  - Species that are smaller have more observations
+  - Species that like it warmer have more observations
+- In all heath habitats
+  - Species that like warmer average temperatures have more observations
+
 ```{r}
 plot_trait_parameters(model_trait2)
 ```
