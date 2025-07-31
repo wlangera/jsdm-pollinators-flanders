@@ -1,4 +1,4 @@
-plot_random_effects <- function(gllvm_model) {
+plot_random_effects <- function(gllvm_model, alpha = 0.05) {
   require("ggplot2")
   require("dplyr")
   require("rlang")
@@ -15,8 +15,8 @@ plot_random_effects <- function(gllvm_model) {
             by = join_by("param", "species")) %>%
     mutate(order = mean(.data$estimate), .by = "species") %>%
     mutate(
-      lcl = .data$estimate + qnorm(0.025) * .data$se,
-      ucl = .data$estimate + qnorm(0.975) * .data$se,
+      lcl = .data$estimate + qnorm(alpha / 2) * .data$se,
+      ucl = .data$estimate + qnorm(1 - alpha / 2) * .data$se,
       significant = !(0 > .data$lcl & 0 < .data$ucl),
       species = reorder(.data$species, order)
     ) %>%
