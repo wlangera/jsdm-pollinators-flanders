@@ -392,30 +392,15 @@ setdiff(names(butterflies_data_wide[, -1]), trait_species)
 ```
 
 No. We do not have trait data for `r length(setdiff(names(butterflies_data_wide[, -1]), trait_species))`.
+We try a fourth-corner model with a reduced dataset without species for which we do not have trait data.
 
 ```{r}
-fourth_corner_specs <- butterflies_data_wide %>%
-  pivot_longer(-"habID", names_to = "species", values_to = "count") %>%
-  mutate(habID = factor(habID)) %>%
-  left_join(plot_data_wide, by = join_by(habID)) %>%
-  filter(count != 0) %>%
-  count(species, habClass) %>%
-  pivot_wider(id_cols = species, names_from = habClass, values_from = "n",
-              values_fill = 0) %>%
-  rowwise() %>%
-  mutate(min = min(`dry heath`, `mixed heath`, `wet heath`)) %>%
-  arrange(min) %>%
-  filter(min > 3,
-         species %in% trait_species) %>%
-  pull(species)
-```
-
-We try a fourth-corner model with a reduced dataset. We remove species that have less than 4 observations per habitat type and species for which we do not have trait data: `r fourth_corner_specs`.
-
-```{r}
+# Select species
+fourth_corner_specs <- intersect(names(butterflies_data_wide)[-1],
+                                 trait_species)
 y_data_traits <- butterflies_data_wide[, c("habID", fourth_corner_specs)]
 
-# Remove sites with zeroes
+# Remove sites with zeroes in y and X dataframes
 no_habs <- y_data_traits[rowSums(y_data_traits[, -1]) == 0, 1] %>%
   pull(habID)
 
@@ -423,14 +408,25 @@ y_data_traits <- y_data_traits %>%
   filter(!habID %in% no_habs)
 x_data_traits <- plot_data_wide %>%
   filter(!habID %in% no_habs)
+```
 
+```{r}
+selected_traits <- c("temperatureMin", "temperatureMax", "temperatureMean",
+                     "bodyLength")
+```
+
+We prepare trait data. We select the following traits and scale them: `r selected_traits`.
+
+```{r}
 # Prepare trait data
 tr_data <- trait_data_interim %>%
   filter(vernacularName %in% fourth_corner_specs) %>%
   column_to_rownames("vernacularName") %>%
-  select(temperatureMin, temperatureMax, temperatureMean, bodyLength)
+  select(all_of(selected_traits))
 tr_data <- scale(model.matrix(~., tr_data))[, -1]
 ```
+
+We first fit a simple model.
 
 ```{r}
 if (file.exists(file.path(cache_path, "model_trait1.Rds"))) {
@@ -466,7 +462,7 @@ We visualise the results:
 plot_trait_parameters(model_trait1)
 ```
 
-The previous assumes of species’ responses are fully due to traits. If the chosen traits are not important to determining species’ environmental responses, it will result in lack-of-fit. So, in this next model we relax that assumption by also including species-specific random effects. We do need to run the model a few times, as it includes a lot of effects and does not always converge well.
+The previous assumes of species’ responses are fully due to traits. If the chosen traits are not important to determining species’ environmental responses, it will result in lack-of-fit. So, in this next model we relax that assumption by also including species-specific random effects.
 
 ```{r}
 if (file.exists(file.path(cache_path, "model_trait2.Rds"))) {
@@ -489,7 +485,7 @@ if (file.exists(file.path(cache_path, "model_trait2.Rds"))) {
 }
 ```
 
-Model fit looks good.
+> Model fit does not work
 
 ```r
 #| fig-height: 10
