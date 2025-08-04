@@ -424,11 +424,15 @@ no_habs <- y_data_traits[rowSums(y_data_traits[, -1]) == 0, 1] %>%
 y_data_traits <- y_data_traits %>%
   filter(!habID %in% no_habs)
 x_data_traits <- plot_data_wide %>%
-  filter(!habID %in% no_habs)
+  filter(!habID %in% no_habs) %>%
+  rename("x_coord" = "x", "y_coord" = "y")
 
 # Prepare trait data
 tr_data <- trait_data_interim %>%
+  # Only keep selected species
   filter(vernacularName %in% fourth_corner_specs) %>%
+  # Sort species like in Y dataset
+  arrange(factor(vernacularName, levels = names(y_data_traits[, -1]))) %>%
   column_to_rownames("vernacularName") %>%
   select(temperatureMin, temperatureMax, temperatureMean, bodyLength)
 tr_data <- scale(model.matrix(~., tr_data))[, -1]
@@ -504,11 +508,11 @@ par(mfrow = c(1, 1))
 plot_random_effects(model_trait2)
 ```
 
-- In dry heath
+- In dry and mixed heath
   - Species that are smaller have more observations
-  - Species that like it warmer have more observations
-- In all heath habitats
-  - Species that like warmer average temperatures have more observations
+  - Species that tolerate a warmer maximum temperature have more observations
+- In dry
+  - Species that tolerate a warmer minimum and mean temperature have more observations
 
 ```{r}
 plot_trait_parameters(model_trait2)
