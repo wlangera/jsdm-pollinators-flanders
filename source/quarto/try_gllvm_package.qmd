@@ -276,7 +276,7 @@ This is a problem.
 
 # Ordination
 
-Looks weird.
+We look at the ordination of the model without covariates.
 
 ```{r}
 #| fig-height: 6
@@ -285,7 +285,7 @@ my_colors <- c("red", "green", "yellow")
 col_vect <- my_colors[plot_data_wide$habClass]
 
 # Make plot
-ordiplot(model4, symbols = TRUE, biplot = TRUE,
+ordiplot(model2, symbols = TRUE, biplot = TRUE,
          s.colors = col_vect, s.cex = 0.5, pch = 16)
 legend(
   "topright",
@@ -294,6 +294,18 @@ legend(
   pch = 16,
   cex = 1
 )
+
+site_scores <- getLV(model2, type = "residual")
+species_loadings <- getLoadings(model2)
+
+site_scores_final <- site_scores %>%
+  bind_cols(plot_data_wide)
+species_loadings_final <- species_loadings %>%
+  as_tibble(rownames = "species")
+
+ggplot(site_scores_final, aes(x = LV1, y = LV2)) +
+  geom_point(aes(colour = habClass)) +
+  geom_text(data = species_loadings_final, aes(label = species))
 ```
 
 # Account for spatial correlation
@@ -314,7 +326,7 @@ if (file.exists(file.path(cache_path, "model5.Rds"))) {
     num.lv = 2,
     family = "ZINB",
     sd.errors = TRUE,
-    starting.val = "zero" # not necessary anymore with development version
+    rangeP = 100 # starting value range parameter
   )
   saveRDS(model5, file.path(cache_path, "model5.Rds"))
 }
@@ -348,7 +360,7 @@ rho1 <- model5$params$sigma[1]
 ```
 
 However the spatial scale parameter is `r rho1`.
-There is something weird going on.
+There is something weird going on. The correlation goes down very fast.
 
 ```{r}
 fun1 <- function(d) exp(-d / rho1)
@@ -356,8 +368,6 @@ curve(fun1, from = 0, to = rho1 * 5, xlab = "distance", ylab = "exp(-d/rho)",
       ylim = c(0, 1), main = "Spatial correlation")
 abline(v = rho1, lty = 2)
 ```
-
-This may be due to bad starting value. Change `rangeP` parameter. This can also be due to the fact that some polygons are next to each other and others are very far away.
 
 How do the effects look like?
 
@@ -495,9 +505,9 @@ if (file.exists(file.path(cache_path, "model_trait2.Rds"))) {
 }
 ```
 
-Model fit looks good.
+Model fit looks more or less good.
 
-```r
+```{r}
 #| fig-height: 10
 par(mfrow = c(3, 2))
 plot(model_trait2)
