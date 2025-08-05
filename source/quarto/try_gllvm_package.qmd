@@ -308,6 +308,117 @@ ggplot(site_scores_final, aes(x = LV1, y = LV2)) +
   geom_text(data = species_loadings_final, aes(label = species))
 ```
 
+
+```{r}
+ord_model1 <- gllvm(
+  y = butterflies_data_wide[, -1],
+  offset = plot_data_wide$offset_var,
+  num.lv = 2,
+  family = "ZINB",
+  sd.errors = FALSE
+)
+```
+
+
+```{r}
+ordiplot(ord_model1, symbols = TRUE, biplot = TRUE,
+         s.colors = col_vect, s.cex = 0.5, pch = 16)
+legend(
+  "topright",
+  legend = levels(plot_data_wide$habClass),
+  col = my_colors,
+  pch = 16,
+  cex = 1
+)
+```
+
+```{r}
+head(butterflies_data_wide[, -1])
+head(plot_data_wide)
+
+# Response only
+my_model1 <- gllvm(
+  y = butterflies_data_wide[, -1],
+  num.lv = 2,
+  family = "ZINB",
+  sd.errors = FALSE
+)
+
+# Convergence
+hist(my_model1$TMBfn$gr())
+
+# Create ordination
+ordiplot(my_model1, symbols = TRUE, biplot = TRUE,
+         s.colors = col_vect, s.cex = 0.5, pch = 16)
+legend(
+  "topright",
+  legend = levels(plot_data_wide$habClass),
+  col = my_colors,
+  pch = 16,
+  cex = 1
+)
+
+# Variance partitioning
+plot_variance_partitioning(my_model1)
+
+
+# Categorical predictor and offset
+my_model2 <- gllvm(
+  y = butterflies_data_wide[, -1],
+  X = plot_data_wide,
+  formula = ~(habClass | 1),
+  beta0com = TRUE,
+  offset = plot_data_wide$offset_var,
+  num.lv = 2,
+  family = "ZINB",
+  sd.errors = FALSE,
+  n.init = 5
+)
+
+# Convergence
+hist(my_model2$TMBfn$gr())
+
+# Create ordination
+ordiplot(my_model2, symbols = TRUE, biplot = TRUE,
+         s.colors = col_vect, s.cex = 0.5, pch = 16)
+legend(
+  "topright",
+  legend = levels(plot_data_wide$habClass),
+  col = my_colors,
+  pch = 16,
+  cex = 1
+)
+
+# Variance partitioning
+plot_variance_partitioning(my_model2)
+
+# Categorical predictor and offset
+my_model2 <- gllvm(
+  y = butterflies_data_wide[, -1],
+  X = plot_data_wide,
+  num.lv = 2,
+  family = "ZINB",
+  sd.errors = FALSE
+)
+
+# Convergence
+hist(my_model2$TMBfn$gr())
+
+# Create ordination
+ordiplot(my_model2, symbols = TRUE, biplot = TRUE,
+         s.colors = col_vect, s.cex = 0.5, pch = 16)
+legend(
+  "topright",
+  legend = levels(plot_data_wide$habClass),
+  col = my_colors,
+  pch = 16,
+  cex = 1
+)
+
+# Variance partitioning
+plot_variance_partitioning(my_model2)
+```
+
 # Account for spatial correlation
 
 ```{r}
